@@ -4,7 +4,7 @@
 
 **Format**: Each decision documented with context, options, choice, rationale, trade-offs, and outcome
 
-**Period**: September-October 2024
+**Period**: September-October 2025
 
 ---
 
@@ -22,7 +22,7 @@
 
 ### D-TECH-001: Rust Implementation
 
-**Date**: October 2, 2024 (Session 1)
+**Date**: October 2, 2025 (Session 1)
 **Decision ID**: D-TECH-001
 **Status**: ✅ Implemented, Validated
 
@@ -81,7 +81,7 @@
 
 ### D-TECH-002: wgpu over CUDA
 
-**Date**: October 3, 2024 (Session 3)
+**Date**: October 3, 2025 (Session 3)
 **Decision ID**: D-TECH-002
 **Status**: ✅ Implemented, Validated
 
@@ -148,7 +148,7 @@ WebGPU:      Build successful ✅
 
 ### D-TECH-003: Slint UI Framework
 
-**Date**: October 3, 2024 (Session 2)
+**Date**: October 3, 2025 (Session 2)
 **Decision ID**: D-TECH-003
 **Status**: ✅ Implemented (viewer functional)
 
@@ -196,7 +196,7 @@ WebGPU:      Build successful ✅
 
 ### D-TECH-004: Workspace Structure (Cargo)
 
-**Date**: October 2, 2024 (Session 1)
+**Date**: October 2, 2025 (Session 1)
 **Decision ID**: D-TECH-004
 **Status**: ✅ Implemented
 
@@ -250,7 +250,7 @@ lgi-rs/ (workspace root)
 
 ### D-ARCH-001: Global GPU Manager (Singleton)
 
-**Date**: October 3, 2024 (Session 3)
+**Date**: October 3, 2025 (Session 3)
 **Decision ID**: D-ARCH-001
 **Status**: ✅ Implemented
 
@@ -333,7 +333,7 @@ let image = GpuManager::global().render(&gaussians)?;
 
 ### D-ARCH-002: Renderer Traits
 
-**Date**: October 2, 2024 (Session 1)
+**Date**: October 2, 2025 (Session 1)
 **Decision ID**: D-ARCH-002
 **Status**: ✅ Implemented
 
@@ -392,7 +392,7 @@ let image = renderer.render(&gaussians, 1920, 1080)?;
 
 ### D-ARCH-003: Error Handling Strategy
 
-**Date**: October 2, 2024 (Session 1)
+**Date**: October 2, 2025 (Session 1)
 **Decision ID**: D-ARCH-003
 **Status**: ✅ Implemented
 
@@ -454,7 +454,7 @@ const char* lgi_last_error_message();
 
 ### D-STRAT-001: Two-Track Development Strategy
 
-**Date**: October 6, 2024 (Session 6)
+**Date**: October 6, 2025 (Session 6)
 **Decision ID**: D-STRAT-001
 **Status**: ✅ Approved, Active
 **User Approval**: ✅ Explicit approval given
@@ -524,7 +524,7 @@ const char* lgi_last_error_message();
 
 ### D-STRAT-002: Master Integration Plan Approach
 
-**Date**: October 6, 2024 (Session 7)
+**Date**: October 6, 2025 (Session 7)
 **Decision ID**: D-STRAT-002
 **Status**: ✅ Implemented, Validated
 
@@ -602,7 +602,7 @@ Average:         +8.08 dB ✅ (exceeded expectations!)
 
 ### D-STRAT-003: Implement All 150 Techniques
 
-**Date**: October 6, 2024 (Session 6)
+**Date**: October 6, 2025 (Session 6)
 **Decision ID**: D-STRAT-003
 **Status**: ✅ User mandate, in progress (32/150)
 
@@ -662,7 +662,7 @@ Average:         +8.08 dB ✅ (exceeded expectations!)
 
 ### D-IMPL-001: Conditional Anisotropy
 
-**Date**: October 5, 2024 (Session 5 - corrected understanding)
+**Date**: October 5, 2025 (Session 5 - corrected understanding)
 **Decision ID**: D-IMPL-001
 **Status**: ✅ Implemented
 
@@ -730,7 +730,7 @@ Conditional:         29.5 dB (+8.9 dB) ✅ WINNER
 
 ### D-IMPL-002: Euler Angles vs Rotation Matrices
 
-**Date**: October 2, 2024 (Session 1)
+**Date**: October 2, 2025 (Session 1)
 **Decision ID**: D-IMPL-002
 **Status**: ✅ Implemented
 
@@ -860,7 +860,7 @@ N = 0.6 × N_entropy + 0.4 × N_gradient
 
 ### D-FMT-001: LGIV Spec Before Implementation
 
-**Date**: October 3, 2024 (Session 3)
+**Date**: October 3, 2025 (Session 3)
 **Decision ID**: D-FMT-001
 **Status**: ✅ Spec complete (1,027 lines)
 
@@ -922,7 +922,7 @@ N = 0.6 × N_entropy + 0.4 × N_gradient
 
 ### D-FMT-002: Chunk-Based Binary Format
 
-**Date**: October 2, 2024 (Session 1)
+**Date**: October 2, 2025 (Session 1)
 **Decision ID**: D-FMT-002
 **Status**: ✅ Implemented
 
@@ -999,7 +999,7 @@ match chunk_type {
 
 ### D-FMT-003: Float32 vs Float16 for Storage
 
-**Date**: October 4, 2024 (Session 4)
+**Date**: October 4, 2025 (Session 4)
 **Decision ID**: D-FMT-003
 **Status**: ✅ Float32 chosen
 

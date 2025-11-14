@@ -4,7 +4,7 @@
 
 **Methodology**: Test-driven, evidence-based, preserving both successes and failures
 
-**Period**: September-October 2024
+**Period**: September-October 2025
 
 ---
 
@@ -929,7 +929,7 @@ With freezing:    100 iters, 24.29 dB, 1.21s (33% faster, -0.07 dB)
 
 ### Hardware Reference
 
-**Development Machine** (Oct 2024):
+**Development Machine** (Oct 2025):
 - CPU: AMD Ryzen (8 cores) @ 3.6 GHz
 - GPU: NVIDIA RTX 4060 (8GB VRAM)
 - RAM: 32GB DDR4

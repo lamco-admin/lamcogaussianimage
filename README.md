@@ -363,7 +363,7 @@ This project builds on:
 
 **Author**: Greg Lamberson
 **Organization**: Lamco Development
-**Project Start**: September 2024
+**Project Start**: September 2025
 **Status**: Active development
 
 For questions, issues, or collaboration:
@@ -374,13 +374,13 @@ For questions, issues, or collaboration:
 
 ## Project History
 
-This project evolved from initial research in September 2024 to a production-ready codec through 8 intensive development sessions in October 2024. Key milestones:
+This project evolved from initial research in September 2025 to a production-ready codec through 8 intensive development sessions in October 2025. Key milestones:
 
-- **Sept 2024**: Research phase, Python prototypes
-- **Oct 2, 2024**: Rust implementation started (Session 1)
-- **Oct 3, 2024**: FFmpeg/ImageMagick integration (Session 2-3)
-- **Oct 6, 2024**: Quality breakthrough, +8 dB achieved (Session 7)
-- **Oct 7, 2024**: Real-world validation started (Session 8)
+- **Sept 2025**: Research phase, Python prototypes
+- **Oct 2, 2025**: Rust implementation started (Session 1)
+- **Oct 3, 2025**: FFmpeg/ImageMagick integration (Session 2-3)
+- **Oct 6, 2025**: Quality breakthrough, +8 dB achieved (Session 7)
+- **Oct 7, 2025**: Real-world validation started (Session 8)
 - **Nov 14, 2025**: Project reorganization for GitHub
 
 **For complete history**, see [PROJECT_HISTORY.md](docs/research/PROJECT_HISTORY.md) - a comprehensive narrative preserving the experimental journey, decisions, and lessons learned.

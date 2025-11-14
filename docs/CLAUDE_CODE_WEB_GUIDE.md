@@ -54,7 +54,7 @@ Simply open the `lamcogaussianimage/` directory in VS Code with Claude Code Web 
 
 ### Where We Are (Nov 14, 2025)
 
-**Last Active Session**: Session 8 (Oct 7, 2024)
+**Last Active Session**: Session 8 (Oct 7, 2025)
 **Focus**: Real-world validation on Kodak dataset
 **Status**: Paused for reorganization, ready to continue
 
