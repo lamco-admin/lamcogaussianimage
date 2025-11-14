@@ -1,0 +1,28 @@
+[package]
+name = "lgi-encoder"
+version = "0.1.0"
+edition = "2021"
+authors = ["GaussianImage Contributors"]
+license = "MIT OR Apache-2.0"
+description = "LGI image encoder with Gaussian fitting"
+
+[dependencies]
+lgi-math = { path = "../lgi-math" }
+lgi-core = { path = "../lgi-core" }
+lgi-gpu = { path = "../lgi-gpu" }  # GPU-accelerated rendering for optimization
+rayon = "1.8"
+image = "0.25"
+indicatif = { version = "0.17", optional = true }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+csv = "1.3"
+rand = "0.8"
+log = "0.4"
+
+[dev-dependencies]
+criterion = "0.5"
+approx = "0.5"
+
+[features]
+default = ["progress"]
+progress = ["indicatif"]

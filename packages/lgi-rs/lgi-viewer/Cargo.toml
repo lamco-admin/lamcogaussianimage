@@ -1,0 +1,60 @@
+[package]
+name = "lgi-viewer"
+version = "0.1.0"
+edition = "2021"
+description = "Professional LGI/LGIV Gaussian Image and Video Viewer"
+
+[[bin]]
+name = "lgi-viewer"
+path = "src/main.rs"
+
+[dependencies]
+# UI Framework - Slint
+slint = "1.8"
+
+# LGI Core Libraries
+lgi-format = { path = "../lgi-format" }
+lgi-gpu = { path = "../lgi-gpu" }
+lgi-pyramid = { path = "../lgi-pyramid" }
+lgi-core = { path = "../lgi-core" }
+lgi-math = { path = "../lgi-math" }
+lgi-encoder = { path = "../lgi-encoder" }
+
+# Image I/O - comprehensive format support
+image = { version = "0.25", features = ["png", "jpeg", "gif", "bmp", "tiff", "webp"] }
+
+# Async runtime
+tokio = { version = "1", features = ["rt-multi-thread"] }
+
+# File dialogs
+rfd = "0.15"
+
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Error handling
+anyhow = "1.0"
+
+# Logging and Tracing
+env_logger = "0.11"
+log = "0.4"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "json"] }
+tracing-appender = "0.2"
+tracing-log = "0.2"  # Bridge log to tracing
+
+# Performance profiling
+sysinfo = "0.32"
+parking_lot = "0.12"  # Better mutexes with statistics
+
+[build-dependencies]
+slint-build = "1.8"
+
+[features]
+default = ["gpu", "tracing"]
+gpu = []
+tracing = []
+detailed-timing = []
+memory-profiling = []
+gaussian-debugging = []
+optimization-visualization = []

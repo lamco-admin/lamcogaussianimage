@@ -1,0 +1,27 @@
+[package]
+name = "lgi-encoder-v2"
+version = "0.1.0"
+edition = "2021"
+authors = ["Lamco Development"]
+license = "MIT"
+
+[dependencies]
+lgi-core = { path = "../lgi-core" }
+lgi-math = { path = "../lgi-math" }
+lgi-gpu = { path = "../lgi-gpu" }
+
+log = "0.4"
+anyhow = "1.0"
+tokio = { version = "1", features = ["rt", "macros"] }
+pollster = "0.3"
+zstd = "0.13"
+image = "0.25"  # For debug logging and codec I/O
+imageproc = "0.25"  # For drawing, visualization
+rand = "0.8"  # For k-means initialization
+serde = { version = "1.0", features = ["derive"] }  # For metadata/JSON
+serde_json = "1.0"  # For metadata/JSON
+ndarray = "0.16"  # For numpy array handling
+ndarray-npy = "0.9"  # For loading .npy files from preprocessing
+
+[dev-dependencies]
+env_logger = "0.11"

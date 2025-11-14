@@ -1,0 +1,104 @@
+warning: unused variable: `inv_det`
+   --> lgi-math/src/parameterization.rs:172:13
+    |
+172 |         let inv_det = T::one() / det_l;
+    |             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_inv_det`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: missing documentation for a struct field
+  --> lgi-math/src/vec.rs:16:5
+   |
+16 |     pub x: T,
+   |     ^^^^^^^^
+   |
+note: the lint level is defined here
+  --> lgi-math/src/lib.rs:31:9
+   |
+31 | #![warn(missing_docs)]
+   |         ^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-math/src/vec.rs:17:5
+   |
+17 |     pub y: T,
+   |     ^^^^^^^^
+
+warning: missing documentation for an associated function
+  --> lgi-math/src/vec.rs:22:5
+   |
+22 |     pub const fn new(x: T, y: T) -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+  --> lgi-math/src/vec.rs:27:5
+   |
+27 |     pub fn zero() -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+  --> lgi-math/src/vec.rs:32:5
+   |
+32 |     pub fn one() -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-math/src/vec.rs:37:5
+   |
+37 |     pub fn dot(self, other: Self) -> T {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-math/src/vec.rs:42:5
+   |
+42 |     pub fn length_squared(self) -> T {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-math/src/vec.rs:47:5
+   |
+47 |     pub fn length(self) -> T {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-math/src/vec.rs:52:5
+   |
+52 |     pub fn normalize(self) -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-math/src/vec.rs:58:5
+   |
+58 |     pub fn min(self, other: Self) -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-math/src/vec.rs:63:5
+   |
+63 |     pub fn max(self, other: Self) -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-math/src/vec.rs:68:5
+   |
+68 |     pub fn clamp(self, min: Self, max: Self) -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a type alias
+   --> lgi-math/src/vec.rs:122:1
+    |
+122 | pub type Vec2f32 = Vector2<f32>;
+    | ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a type alias
+   --> lgi-math/src/vec.rs:123:1
+    |
+123 | pub type Vec2f64 = Vector2<f64>;
+    | ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> lgi-math/src/compositing.rs:134:5
+    |
+134 |     pub fn new(mode: AlphaMode) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+

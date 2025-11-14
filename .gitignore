@@ -1,0 +1,96 @@
+# Rust build artifacts
+/target/
+**/target/
+**/*.rs.bk
+*.pdb
+
+# Cargo lock (keep for applications, ignore for libraries)
+# Uncomment if this becomes a library
+# Cargo.lock
+
+# Local configuration
+.env
+.env.local
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Python (for legacy packages)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+ENV/
+
+# Test outputs
+*.lgi
+*.png.test
+*.jpg.test
+test-output/
+output/
+
+# Benchmark results
+benchmarks/results/
+*.csv
+*.json
+
+# Large files / datasets (use Git LFS if needed)
+*.lgi.large
+test-data/**/*.jpg
+test-data/**/*.png
+# Exception: Keep smaller test files
+!test-data/test_images_new_synthetic/*.png
+
+# Logs
+*.log
+logs/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+
+# Local research (not synced to GitHub)
+/local-research/
+
+# Compiled Python
+*.pyc
+
+# C/C++ build artifacts (from tools)
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+
+# Documentation build
+book/
+docs/book/
+target/doc/
+
+# wgpu shader compilation cache
+.wgpu_cache/
+
+# Coverage
+*.profraw
+*.profdata
+lcov.info
+coverage/
+
+# Generated files
+Cargo.lock.bak

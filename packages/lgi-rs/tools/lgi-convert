@@ -1,0 +1,67 @@
+#!/bin/bash
+# LGI wrapper for ImageMagick-like conversion
+# Usage: lgi-convert input.png output.lgi
+#        lgi-convert input.lgi output.png
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LGI_CLI="$SCRIPT_DIR/../target/release/lgi-cli-v2"
+
+if [ ! -f "$LGI_CLI" ]; then
+    echo "Error: lgi-cli-v2 not found. Run: cargo build --release --bin lgi-cli-v2"
+    exit 1
+fi
+
+if [ $# -ne 2 ]; then
+    echo "Usage: $0 <input> <output>"
+    echo "Examples:"
+    echo "  $0 photo.png compressed.lgi    # Encode PNG → LGI"
+    echo "  $0 compressed.lgi photo.png    # Decode LGI → PNG"
+    exit 1
+fi
+
+INPUT="$1"
+OUTPUT="$2"
+
+# Check if input exists
+if [ ! -f "$INPUT" ]; then
+    echo "Error: Input file not found: $INPUT"
+    exit 1
+fi
+
+# Determine operation based on file extensions
+case "$INPUT" in
+    *.lgi)
+        # Decode LGI → PNG
+        echo "Decoding $INPUT → $OUTPUT..."
+        "$LGI_CLI" decode -i "$INPUT" -o "$OUTPUT"
+        echo "✅ Decoded successfully"
+        ;;
+    *.png|*.jpg|*.jpeg)
+        case "$OUTPUT" in
+            *.lgi)
+                # Encode PNG → LGI
+                echo "Encoding $INPUT → $OUTPUT..."
+                TEMP_PNG="/tmp/lgi_encode_$$.png"
+                "$LGI_CLI" encode -i "$INPUT" -o "$TEMP_PNG" -n 1000 -q balanced --save-lgi
+                mv "${TEMP_PNG%.png}.lgi" "$OUTPUT"
+                rm -f "$TEMP_PNG"
+                echo "✅ Encoded successfully"
+
+                # Show file info
+                "$LGI_CLI" info -i "$OUTPUT"
+                ;;
+            *.png)
+                # Re-encode PNG → PNG (via LGI)
+                echo "Re-encoding $INPUT → $OUTPUT (via LGI)..."
+                "$LGI_CLI" encode -i "$INPUT" -o "$OUTPUT" -n 1000 -q balanced
+                echo "✅ Re-encoded successfully"
+                ;;
+        esac
+        ;;
+    *)
+        echo "Error: Unsupported input format. Use .png, .jpg, or .lgi"
+        exit 1
+        ;;
+esac

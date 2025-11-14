@@ -1,0 +1,223 @@
+LGI CODEC - COMMAND REFERENCE
+==============================
+
+BUILD COMMANDS
+--------------
+# Build everything (release mode)
+cargo build --release --all
+
+# Build specific crate
+cargo build --release -p lgi-format
+
+# Build CLI tools only
+cargo build --release --bins
+
+TEST COMMANDS
+-------------
+# Run all tests
+cargo test --all
+
+# Run specific crate tests
+cargo test -p lgi-format
+
+# Run with output
+cargo test --all -- --nocapture
+
+# Run specific test
+cargo test -p lgi-format quantization::tests::test_lgiq_b_roundtrip
+
+EXAMPLES
+--------
+# Compression demonstration (all 4 profiles)
+cargo run --release --example compression_demo
+
+# GPU backend detection
+cargo run --release --example backend_detection
+
+# GPU performance benchmark
+cargo run --release --example gpu_benchmark
+
+CLI USAGE
+---------
+# Encode image (balanced mode)
+cargo run --release --bin lgi-cli-v2 -- encode \
+  -i input.png \
+  -o output.png \
+  -n 1000 \
+  --save-lgi
+
+# Encode with QA training (better compression)
+cargo run --release --bin lgi-cli-v2 -- encode \
+  -i input.png \
+  -o output.png \
+  -n 1000 \
+  --qa-training \
+  --save-lgi
+
+# Encode with metrics export
+cargo run --release --bin lgi-cli-v2 -- encode \
+  -i input.png \
+  -o output.png \
+  -n 1000 \
+  --save-lgi \
+  --metrics-csv metrics.csv
+
+# Decode .lgi file
+cargo run --release --bin lgi-cli-v2 -- decode \
+  -i compressed.lgi \
+  -o output.png
+
+# Inspect .lgi file  
+cargo run --release --bin lgi-cli-v2 -- info -i file.lgi
+
+QUALITY PRESETS
+---------------
+-q fast       # 500 iterations, quick (~30s)
+-q balanced   # 2000 iterations, default (~60s)
+-q high       # 5000 iterations, better quality (~2min)
+-q ultra      # 10000 iterations, best quality (~5min)
+
+USEFUL DEVELOPMENT COMMANDS
+----------------------------
+# Clean build artifacts
+cargo clean
+
+# Check for errors without building
+cargo check --all
+
+# Format code
+cargo fmt --all
+
+# Lint code
+cargo clippy --all-targets --all-features
+
+# Generate documentation
+cargo doc --open
+
+# Generate documentation for specific crate
+cargo doc -p lgi-format --open
+
+# Watch tests (requires cargo-watch)
+cargo watch -x "test --all"
+
+BENCHMARKING
+------------
+# Run criterion benchmarks (if available)
+cargo bench --all
+
+# Profile with flamegraph (requires cargo-flamegraph)
+cargo flamegraph --example compression_demo
+
+DEBUGGING
+---------
+# Build with debug symbols
+cargo build --all
+
+# Run with backtrace
+RUST_BACKTRACE=1 cargo run --bin lgi-cli-v2 -- encode -i test.png -o out.png
+
+# Run with logging
+RUST_LOG=debug cargo run --example backend_detection
+
+COMMON WORKFLOWS
+----------------
+# Quick test: Encode → Decode → Compare
+cargo run --release --bin lgi-cli-v2 -- encode -i test.png -o enc.png --save-lgi
+cargo run --release --bin lgi-cli-v2 -- decode -i enc.lgi -o dec.png
+# Compare enc.png and dec.png visually
+
+# Compression comparison: Test all profiles
+for profile in B S H X; do
+  echo "Testing LGIQ-${profile}..."
+  # (Would need CLI flag for profile selection)
+done
+
+# Batch processing
+for img in *.png; do
+  cargo run --release --bin lgi-cli-v2 -- encode \
+    -i "$img" -o "encoded_$img" -n 1000 --save-lgi
+done
+
+CHECKING STATUS
+---------------
+# Quick health check
+cargo build --release --all && cargo test --all
+# Should see: BUILD SUCCESS + 65/65 TESTS PASSING
+
+# Detailed status
+cat lgi-rs/FINAL_VERIFICATION.txt
+
+DOCUMENTATION
+-------------
+# Read project overview
+cat START_HERE.txt
+
+# Read complete status
+less WHERE_WE_ARE.md
+
+# Browse documentation index
+less lgi-rs/docs/DOCUMENTATION_INDEX.md
+
+# Generate and view API docs
+cargo doc --all --no-deps --open
+
+RELEASE BUILD
+-------------
+# Optimized release build
+RUSTFLAGS="-C target-cpu=native" cargo build --release --all
+
+# Strip debug symbols (smaller binaries)
+cargo build --release --all
+strip target/release/lgi-cli-v2
+
+# Create distribution package
+cargo build --release --all
+tar -czf lgi-codec-0.1.0-linux-x86_64.tar.gz \
+  target/release/lgi-cli-v2 \
+  README.md \
+  LICENSE-MIT \
+  LICENSE-APACHE
+
+TROUBLESHOOTING
+---------------
+# If build fails
+cargo clean
+cargo update
+cargo build --all
+
+# If tests fail
+cargo test --all -- --nocapture
+# (See detailed error messages)
+
+# If GPU not detected
+cargo run --release --example backend_detection
+# (Should show available adapters)
+
+VERSION INFO
+------------
+# Check Rust version
+rustc --version
+# Should be: 1.75+
+
+# Check cargo version  
+cargo --version
+
+# Check wgpu version in use
+cargo tree -p wgpu
+# Should show: wgpu v27.x
+
+================================================
+Quick Reference - Most Common Commands
+================================================
+
+BUILD:   cargo build --release --all
+TEST:    cargo test --all
+ENCODE:  cargo run --release --bin lgi-cli-v2 -- encode -i in.png -o out.png --save-lgi
+DECODE:  cargo run --release --bin lgi-cli-v2 -- decode -i file.lgi -o out.png
+INFO:    cargo run --release --bin lgi-cli-v2 -- info -i file.lgi
+DEMO:    cargo run --release --example compression_demo
+
+STATUS:  cat lgi-rs/FINAL_VERIFICATION.txt
+DOCS:    less lgi-rs/docs/DOCUMENTATION_INDEX.md
+
+================================================

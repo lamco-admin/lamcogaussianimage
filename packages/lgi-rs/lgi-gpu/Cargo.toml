@@ -1,0 +1,39 @@
+[package]
+name = "lgi-gpu"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+# Core dependencies
+lgi-math = { path = "../lgi-math" }
+lgi-core = { path = "../lgi-core" }
+
+# GPU - Latest stable version with all features
+wgpu = { version = "27", features = ["wgsl"] }
+parking_lot = "0.12"
+once_cell = "1.20"
+tracing = "0.1"
+pollster = "0.3"
+bytemuck = { version = "1.14", features = ["derive"] }
+futures-intrusive = "0.5"
+
+# Utilities
+thiserror = "1.0"
+anyhow = "1.0"
+log = "0.4"
+
+[dev-dependencies]
+env_logger = "0.11"
+criterion = "0.5"
+
+[[example]]
+name = "gpu_benchmark"
+path = "examples/gpu_benchmark.rs"
+
+[[example]]
+name = "backend_detection"
+path = "examples/backend_detection.rs"
