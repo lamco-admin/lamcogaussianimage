@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>LGI Web Viewer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .drop-zone {
+            border: 3px dashed #ccc;
+            border-radius: 8px;
+            padding: 60px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 20px 0;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #4CAF50;
+            background: #f0f8f0;
+        }
+        #canvas {
+            max-width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: none;
+            margin: 20px 0;
+        }
+        .info {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            display: none;
+        }
+        .info div {
+            padding: 4px 0;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .performance {
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 LGI Gaussian Image Viewer</h1>
+
+        <div class="drop-zone" id="dropZone">
+            <p style="font-size: 18px; margin: 0;">📁 Drop .lgi file here or click to select</p>
+            <p style="color: #666; margin: 10px 0 0 0;">Supports LGI files with GPU-accelerated rendering</p>
+            <input type="file" id="fileInput" accept=".lgi" style="display: none;">
+        </div>
+
+        <div class="stats" id="stats" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-label">Resolution</div>
+                <div class="stat-value" id="resolution">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Gaussians</div>
+                <div class="stat-value" id="gaussians">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Compression</div>
+                <div class="stat-value" id="compression">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Render Time</div>
+                <div class="stat-value" id="renderTime">-</div>
+            </div>
+        </div>
+
+        <div>
+            <button id="downloadBtn" style="display: none;">💾 Download as PNG</button>
+            <button id="fullscreenBtn" style="display: none;">🖼️ Fullscreen</button>
+        </div>
+
+        <canvas id="canvas"></canvas>
+
+        <div class="info" id="info"></div>
+
+        <div class="performance" id="performance"></div>
+    </div>
+
+    <script type="module">
+        import init, { LgiWasmDecoder, version } from './pkg/lgi_wasm.js';
+
+        async function loadLGI() {
+            await init();
+
+            console.log('LGI WASM version:', version());
+
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const canvas = document.getElementById('canvas');
+            const info = document.getElementById('info');
+            const stats = document.getElementById('stats');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+            // Click to select file
+            dropZone.addEventListener('click', () => fileInput.click());
+
+            // Drag and drop
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+
+            dropZone.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+
+                const file = e.dataTransfer.files[0];
+                if (file) await processFile(file);
+            });
+
+            // File input
+            fileInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) await processFile(file);
+            });
+
+            async function processFile(file) {
+                console.log('Loading file:', file.name);
+
+                const arrayBuffer = await file.arrayBuffer();
+                const bytes = new Uint8Array(arrayBuffer);
+
+                const decoder = new LgiWasmDecoder();
+
+                const startTime = performance.now();
+
+                // Load file
+                decoder.loadFromBytes(bytes);
+
+                const loadTime = performance.now() - startTime;
+
+                // Get info
+                const fileInfo = decoder.getFileInfo();
+                console.log('File info:', fileInfo);
+
+                // Render
+                const renderStart = performance.now();
+                decoder.renderToCanvas(canvas);
+                const renderTime = performance.now() - renderStart;
+
+                // Show canvas and info
+                canvas.style.display = 'block';
+                stats.style.display = 'grid';
+                info.style.display = 'block';
+                downloadBtn.style.display = 'inline-block';
+                fullscreenBtn.style.display = 'inline-block';
+
+                // Update stats
+                document.getElementById('resolution').textContent =
+                    `${fileInfo.width}×${fileInfo.height}`;
+                document.getElementById('gaussians').textContent =
+                    fileInfo.gaussian_count.toLocaleString();
+                document.getElementById('compression').textContent =
+                    `${fileInfo.compression_ratio.toFixed(1)}×`;
+                document.getElementById('renderTime').textContent =
+                    `${renderTime.toFixed(1)}ms`;
+
+                // Update info
+                info.innerHTML = `
+                    <div><strong>File:</strong> ${file.name}</div>
+                    <div><strong>Size:</strong> ${(file.size / 1024).toFixed(1)} KB</div>
+                    <div><strong>Load Time:</strong> ${loadTime.toFixed(1)}ms</div>
+                    <div><strong>Render Time:</strong> ${renderTime.toFixed(1)}ms</div>
+                    <div><strong>Compressed:</strong> ${fileInfo.compressed ? 'Yes' : 'No'}</div>
+                `;
+
+                document.getElementById('performance').textContent =
+                    `Performance: ${(1000 / renderTime).toFixed(1)} FPS (CPU rendering in browser)`;
+            }
+
+            // Download as PNG
+            downloadBtn.addEventListener('click', () => {
+                canvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'lgi_export.png';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                });
+            });
+
+            // Fullscreen
+            fullscreenBtn.addEventListener('click', () => {
+                canvas.requestFullscreen();
+            });
+        }
+
+        loadLGI();
+    </script>
+</body>
+</html>

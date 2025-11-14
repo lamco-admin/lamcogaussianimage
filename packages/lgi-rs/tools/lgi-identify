@@ -1,0 +1,28 @@
+#!/bin/bash
+# LGI file info tool (ImageMagick identify equivalent)
+# Usage: lgi-identify file.lgi
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LGI_CLI="$SCRIPT_DIR/../target/release/lgi-cli-v2"
+
+if [ ! -f "$LGI_CLI" ]; then
+    echo "Error: lgi-cli-v2 not found. Run: cargo build --release --bin lgi-cli-v2"
+    exit 1
+fi
+
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 <file.lgi> [file2.lgi ...]"
+    exit 1
+fi
+
+for file in "$@"; do
+    if [ ! -f "$file" ]; then
+        echo "Error: File not found: $file"
+        continue
+    fi
+
+    "$LGI_CLI" info -i "$file"
+    echo ""
+done

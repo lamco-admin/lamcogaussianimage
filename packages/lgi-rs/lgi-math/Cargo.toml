@@ -1,0 +1,69 @@
+[package]
+name = "lgi-math"
+version = "0.1.0"
+edition = "2021"
+authors = ["GaussianImage Contributors"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/gaussian-image/lgi-rs"
+rust-version = "1.75"
+description = "Mathematical primitives for LGI/LGIV Gaussian image format"
+keywords = ["gaussian", "splatting", "image", "compression", "math"]
+categories = ["mathematics", "multimedia::images", "no-std"]
+
+[dependencies]
+# Core math (no_std compatible)
+glam = { version = "0.28", default-features = false, features = ["libm"] }
+nalgebra = { version = "0.33", optional = true }
+approx = "0.5"
+
+# SIMD
+wide = { version = "0.7", optional = true }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"], optional = true }
+bytemuck = { version = "1.14", features = ["derive"], optional = true }
+
+# Error handling
+thiserror = { version = "1.0", optional = true }
+
+# Utilities
+rand = { version = "0.8", optional = true }
+
+[dev-dependencies]
+criterion = "0.5"
+proptest = "1.4"
+rand = "0.8"
+approx = "0.5"
+
+[features]
+default = ["std", "f32"]
+std = ["glam/std", "thiserror"]
+libm = ["glam/libm"]
+
+# Precision
+f32 = []
+f64 = []
+
+# SIMD support
+simd = ["wide"]
+
+# Advanced math
+advanced = ["nalgebra"]
+
+# Serialization
+serde = ["dep:serde", "glam/serde"]
+bytemuck = ["dep:bytemuck", "glam/bytemuck"]
+
+# Random generation (for testing)
+rand = ["dep:rand", "glam/rand"]
+
+# All features
+full = ["std", "f32", "f64", "simd", "advanced", "serde", "bytemuck", "rand"]
+
+[[bench]]
+name = "gaussian_eval"
+harness = false
+
+[[bench]]
+name = "compositing"
+harness = false

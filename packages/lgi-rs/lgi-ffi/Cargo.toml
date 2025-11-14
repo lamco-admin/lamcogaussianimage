@@ -1,0 +1,34 @@
+[package]
+name = "lgi-ffi"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lib]
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+# Core LGI crates
+lgi-math = { path = "../lgi-math" }
+lgi-core = { path = "../lgi-core" }
+lgi-encoder = { path = "../lgi-encoder" }
+lgi-format = { path = "../lgi-format" }
+
+# Error handling
+thiserror = "1.0"
+
+# Async runtime for GPU
+tokio = { version = "1", features = ["rt", "rt-multi-thread"] }
+once_cell = "1.20"
+
+# GPU support (always enabled for autodetection)
+lgi-gpu = { path = "../lgi-gpu" }
+
+[features]
+default = []
+
+[build-dependencies]
+cbindgen = "0.27"

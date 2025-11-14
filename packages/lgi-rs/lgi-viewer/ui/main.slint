@@ -1,0 +1,491 @@
+// LGI Viewer - Professional Gaussian Image Viewer
+// Copyright (c) 2025 Lamco Development
+
+import { Button, VerticalBox, HorizontalBox, ListView, LineEdit, CheckBox, ComboBox, Slider, GroupBox, ScrollView } from "std-widgets.slint";
+
+export struct FileInfo {
+    filename: string,
+    width: int,
+    height: int,
+    gaussian_count: int,
+    file_size: int,
+    compression_ratio: float,
+    profile: string,
+    has_vq: bool,
+    has_qa: bool,
+}
+
+export struct PerformanceMetrics {
+    fps: float,
+    frame_time_ms: float,
+    gpu_name: string,
+    gpu_backend: string,
+    pyramid_level: int,
+    total_levels: int,
+}
+
+export component LgiViewer inherits Window {
+    title: "LGI Viewer - Professional Gaussian Image Viewer";
+    preferred-width: 1600px;
+    preferred-height: 1000px;
+
+    // Callbacks
+    callback load-file();
+    callback load-image-for-encoding();  // Load JPG/PNG/etc and encode to LGI
+    callback save-as-lgi();  // Save current as .lgi
+    callback save-png-native();
+    callback save-png-custom(string /* resolution */);
+    callback toggle-render-mode();
+    callback toggle-gaussian-overlay();
+    callback toggle-info-overlay();
+    callback zoom-in();
+    callback zoom-out();
+    callback reset-view();
+    callback export-gaussians();
+    callback request-render();
+    callback update-encoding-progress(float /* percent */);
+    callback encoding-complete();
+
+    // Properties
+    in-out property <image> display_image;
+    in-out property <FileInfo> file-info: {
+        filename: "No file loaded",
+        width: 0,
+        height: 0,
+        gaussian_count: 0,
+        file_size: 0,
+        compression_ratio: 0.0,
+        profile: "Unknown",
+        has_vq: false,
+        has_qa: false,
+    };
+
+    in-out property <PerformanceMetrics> metrics: {
+        fps: 0.0,
+        frame_time_ms: 0.0,
+        gpu_name: "Detecting...",
+        gpu_backend: "Unknown",
+        pyramid_level: 0,
+        total_levels: 0,
+    };
+
+    in-out property <float> zoom: 1.0;
+    in-out property <string> render-mode: "Accumulated Sum";
+    in-out property <bool> show-gaussians: false;
+    in-out property <bool> show-info: true;
+    in-out property <string> status-text: "Ready";
+    in-out property <int> num-gaussians: 1000;
+    in-out property <string> encoding-profile: "Balanced";
+    in-out property <bool> encoding-in-progress: false;
+    in-out property <float> encoding-progress: 0.0;
+
+    HorizontalBox {
+        // Left Sidebar - File Info & Controls
+        VerticalBox {
+            width: 320px;
+
+            ScrollView {
+                VerticalBox {
+                    padding: 10px;
+                    spacing: 10px;
+
+                    // File Info Section
+                    GroupBox {
+                        title: "File Information";
+
+                        VerticalBox {
+                            spacing: 5px;
+
+                            HorizontalBox {
+                                Text { text: "File:"; font-weight: 700; min-width: 100px; }
+                                Text { text: file-info.filename; overflow: elide; }
+                            }
+
+                            HorizontalBox {
+                                Text { text: "Dimensions:"; font-weight: 700; min-width: 100px; }
+                                Text { text: file-info.width + " × " + file-info.height; }
+                            }
+
+                            HorizontalBox {
+                                Text { text: "Gaussians:"; font-weight: 700; min-width: 100px; }
+                                Text { text: file-info.gaussian_count; color: #00aa00; font-weight: 700; }
+                            }
+
+                            HorizontalBox {
+                                Text { text: "File Size:"; font-weight: 700; min-width: 100px; }
+                                Text { text: round(file-info.file_size / 1024) + " KB"; }
+                            }
+
+                            HorizontalBox {
+                                Text { text: "Compression:"; font-weight: 700; min-width: 100px; }
+                                Text { text: round(file-info.compression_ratio * 10) / 10 + "×"; color: #0066ff; font-weight: 700; }
+                            }
+
+                            HorizontalBox {
+                                Text { text: "Profile:"; font-weight: 700; min-width: 100px; }
+                                Text { text: file-info.profile; }
+                            }
+
+                            HorizontalBox {
+                                Text { text: "VQ:"; font-weight: 700; min-width: 100px; }
+                                Text { text: file-info.has_vq ? "Yes" : "No"; }
+                            }
+
+                            HorizontalBox {
+                                Text { text: "QA Training:"; font-weight: 700; min-width: 100px; }
+                                Text { text: file-info.has_qa ? "Yes" : "No"; }
+                            }
+                        }
+                    }
+
+                    // Performance Section
+                    GroupBox {
+                        title: "Performance";
+
+                        VerticalBox {
+                            spacing: 5px;
+
+                            HorizontalBox {
+                                Text { text: "FPS:"; font-weight: 700; min-width: 80px; }
+                                Text { text: round(metrics.fps); color: #ff6600; font-size: 18px; font-weight: 700; }
+                            }
+
+                            HorizontalBox {
+                                Text { text: "Frame Time:"; font-weight: 700; min-width: 80px; }
+                                Text { text: round(metrics.frame_time_ms * 100) / 100 + " ms"; }
+                            }
+
+                            HorizontalBox {
+                                Text { text: "GPU:"; font-weight: 700; min-width: 80px; }
+                                Text { text: metrics.gpu_name; color: #00aa00; }
+                            }
+
+                            HorizontalBox {
+                                Text { text: "Backend:"; font-weight: 700; min-width: 80px; }
+                                Text { text: metrics.gpu_backend; }
+                            }
+
+                            HorizontalBox {
+                                Text { text: "Pyramid:"; font-weight: 700; min-width: 80px; }
+                                Text { text: "Level " + metrics.pyramid_level + " / " + metrics.total_levels; }
+                            }
+                        }
+                    }
+
+                    // File Operations
+                    GroupBox {
+                        title: "File Operations";
+
+                        VerticalBox {
+                            spacing: 10px;
+
+                            Button {
+                                text: "📁 Load .lgi File";
+                                clicked => { root.load-file(); }
+                            }
+
+                            Button {
+                                text: "📷 Load Image & Encode";
+                                clicked => { root.load-image-for-encoding(); }
+                                enabled: !encoding-in-progress;
+                            }
+
+                            Button {
+                                text: "💾 Save as .lgi";
+                                clicked => { root.save-as-lgi(); }
+                                enabled: !encoding-in-progress && file-info.gaussian_count > 0;
+                            }
+
+                            // Encoding progress
+                            if encoding-in-progress: VerticalBox {
+                                spacing: 5px;
+                                Text {
+                                    text: "Encoding... " + round(encoding-progress) + "%";
+                                    color: #ff6600;
+                                    font-weight: 700;
+                                }
+                                Rectangle {
+                                    height: 4px;
+                                    background: #333333;
+                                    Rectangle {
+                                        width: parent.width * encoding-progress / 100;
+                                        background: #ff6600;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Encoding Settings
+                    GroupBox {
+                        title: "Encoding Settings";
+
+                        VerticalBox {
+                            spacing: 10px;
+
+                            HorizontalBox {
+                                Text { text: "Gaussians:"; vertical-alignment: center; min-width: 90px; }
+                                LineEdit {
+                                    text: num-gaussians;
+                                    input-type: number;
+                                }
+                            }
+
+                            HorizontalBox {
+                                Text { text: "Profile:"; vertical-alignment: center; min-width: 90px; }
+                                ComboBox {
+                                    model: ["Balanced", "Small", "High", "Lossless"];
+                                    current-value <=> encoding-profile;
+                                }
+                            }
+                        }
+                    }
+
+                    // View Controls
+                    GroupBox {
+                        title: "View Controls";
+
+                        VerticalBox {
+                            spacing: 10px;
+
+                            Rectangle { height: 5px; }
+
+                            Text { text: "Zoom: " + round(zoom * 100) / 100 + "×"; font-weight: 700; }
+                            Slider {
+                                minimum: 0.1;
+                                maximum: 10.0;
+                                value <=> zoom;
+                                changed(new_zoom) => { root.request-render(); }
+                            }
+
+                            HorizontalBox {
+                                spacing: 5px;
+                                Button {
+                                    text: "➕ Zoom In";
+                                    clicked => { root.zoom-in(); }
+                                }
+                                Button {
+                                    text: "➖ Zoom Out";
+                                    clicked => { root.zoom-out(); }
+                                }
+                            }
+
+                            Button {
+                                text: "↺ Reset View";
+                                clicked => { root.reset-view(); }
+                            }
+                        }
+                    }
+
+                    // Render Settings
+                    GroupBox {
+                        title: "Render Settings";
+
+                        VerticalBox {
+                            spacing: 10px;
+
+                            HorizontalBox {
+                                Text { text: "Mode:"; vertical-alignment: center; min-width: 60px; }
+                                ComboBox {
+                                    model: ["Accumulated Sum", "Alpha Composite"];
+                                    current-value <=> render-mode;
+                                    selected => { root.toggle-render-mode(); }
+                                }
+                            }
+
+                            CheckBox {
+                                text: "Show Gaussians";
+                                checked <=> show-gaussians;
+                                toggled => { root.toggle-gaussian-overlay(); }
+                            }
+
+                            CheckBox {
+                                text: "Show Info Overlay";
+                                checked <=> show-info;
+                                toggled => { root.toggle-info-overlay(); }
+                            }
+                        }
+                    }
+
+                    // Export Options
+                    GroupBox {
+                        title: "Export";
+
+                        VerticalBox {
+                            spacing: 10px;
+
+                            Button {
+                                text: "💾 Export PNG (Native)";
+                                clicked => { root.save-png-native(); }
+                            }
+
+                            Button {
+                                text: "💾 Export PNG (2×)";
+                                clicked => { root.save-png-custom("2x"); }
+                            }
+
+                            Button {
+                                text: "💾 Export PNG (4×)";
+                                clicked => { root.save-png-custom("4x"); }
+                            }
+
+                            Button {
+                                text: "📊 Export Gaussians CSV";
+                                clicked => { root.export-gaussians(); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Center - Image Display
+        VerticalBox {
+            // Toolbar
+            Rectangle {
+                height: 40px;
+                background: #2c2c2c;
+
+                HorizontalBox {
+                    padding: 8px;
+                    spacing: 15px;
+
+                    Text {
+                        text: "🎨 LGI Viewer";
+                        font-size: 18px;
+                        font-weight: 700;
+                        vertical-alignment: center;
+                        color: #ffffff;
+                    }
+
+                    Rectangle { horizontal-stretch: 1; }
+
+                    Text {
+                        text: "🚀 " + round(metrics.fps) + " FPS";
+                        font-size: 16px;
+                        font-weight: 700;
+                        color: metrics.fps > 60 ? #00ff00 : (metrics.fps > 30 ? #ffaa00 : #ff0000);
+                        vertical-alignment: center;
+                    }
+
+                    Text {
+                        text: "🔍 " + round(zoom * 100) + "%";
+                        font-size: 14px;
+                        vertical-alignment: center;
+                        color: #aaaaaa;
+                    }
+
+                    Text {
+                        text: "📊 Level " + metrics.pyramid_level + "/" + metrics.total_levels;
+                        font-size: 14px;
+                        vertical-alignment: center;
+                        color: #aaaaaa;
+                    }
+                }
+            }
+
+            // Image Viewport
+            viewport := Rectangle {
+                background: #1a1a1a;
+
+                // Main image display
+                if display_image.width > 0: Image {
+                    source: display_image;
+                    width: 100%;
+                    height: 100%;
+                    image-fit: contain;
+                }
+
+                // "No file" message
+                if display_image.width == 0: VerticalBox {
+                    alignment: center;
+                    Text {
+                        text: "No file loaded";
+                        font-size: 24px;
+                        color: #666666;
+                        horizontal-alignment: center;
+                    }
+                    Text {
+                        text: "Click 'Load .lgi File' to begin";
+                        font-size: 16px;
+                        color: #444444;
+                        horizontal-alignment: center;
+                    }
+                }
+
+                // Info Overlay
+                if show-info && display_image.width > 0: Rectangle {
+                    x: 15px;
+                    y: 15px;
+                    width: 250px;
+                    height: 160px;
+                    background: #000000dd;
+                    border-radius: 8px;
+
+                    VerticalBox {
+                        padding: 12px;
+                        spacing: 6px;
+
+                        Text {
+                            text: "📄 " + file-info.filename;
+                            color: #ffffff;
+                            font-size: 14px;
+                            font-weight: 700;
+                        }
+                        Text {
+                            text: "📐 " + file-info.width + " × " + file-info.height;
+                            color: #aaaaaa;
+                        }
+                        Text {
+                            text: "🎯 " + file-info.gaussian_count + " Gaussians";
+                            color: #00ff00;
+                            font-weight: 700;
+                        }
+                        Text {
+                            text: "🗜️  " + round(file-info.compression_ratio * 10) / 10 + "× compression";
+                            color: #00aaff;
+                        }
+                        Text {
+                            text: "🚀 " + round(metrics.fps) + " FPS";
+                            color: #ff6600;
+                            font-size: 16px;
+                            font-weight: 700;
+                        }
+                        Text {
+                            text: "🎮 " + render-mode;
+                            color: #ffaa00;
+                        }
+                    }
+                }
+            }
+
+            // Status Bar
+            Rectangle {
+                height: 32px;
+                background: #2c2c2c;
+
+                HorizontalBox {
+                    padding: 8px;
+                    spacing: 20px;
+
+                    Text {
+                        text: status-text;
+                        vertical-alignment: center;
+                        color: #aaaaaa;
+                    }
+                    Rectangle { horizontal-stretch: 1; }
+                    Text {
+                        text: "🎮 " + metrics.gpu_name;
+                        vertical-alignment: center;
+                        color: #00aa00;
+                    }
+                    Text {
+                        text: metrics.gpu_backend;
+                        vertical-alignment: center;
+                        color: #888888;
+                    }
+                }
+            }
+        }
+    }
+}

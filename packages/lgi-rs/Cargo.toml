@@ -1,0 +1,50 @@
+[workspace]
+members = ["lgi-benchmarks","lgi-cli","lgi-core", "lgi-encoder", "lgi-encoder-v2", "lgi-ffi", "lgi-format", "lgi-gpu",
+    "lgi-math", "lgi-pyramid", "lgi-viewer", "lgi-wasm",
+    # Future members:
+    # "lgi-decoder",
+    # "lgiv-codec",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["GaussianImage Contributors"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/gaussian-image/lgi-rs"
+rust-version = "1.75"
+
+[workspace.dependencies]
+# Math and numerics
+glam = "0.28"
+nalgebra = "0.33"
+approx = "0.5"
+
+# SIMD
+wide = "0.7"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+bytemuck = { version = "1.14", features = ["derive"] }
+
+# Utilities
+thiserror = "1.0"
+rand = "0.8"
+rayon = "1.8"
+
+# Testing
+criterion = "0.5"
+proptest = "1.4"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = true
+
+[profile.bench]
+inherits = "release"
+
+[profile.dev]
+opt-level = 1
