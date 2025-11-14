@@ -204,7 +204,7 @@ lgi-project/
 - **Architecture Docs**: [docs/architecture/](docs/architecture/)
 
 ### For Researchers
-- **LGI Format Specification**: [docs/architecture/](docs/architecture/) (in local-research/raw-sessions/oct-2024/architecture/)
+- **LGI Format Specification**: [docs/architecture/](docs/architecture/) (in local-research/raw-sessions/oct-2025/architecture/)
 - **LGIV Video Specification**: [docs/architecture/](docs/architecture/) (video codec spec, implementation pending)
 
 ---
