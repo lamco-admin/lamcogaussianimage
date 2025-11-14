@@ -17,7 +17,7 @@ LGI (Lamco Gaussian Image) is a novel image codec that represents images as coll
 - **Quality**: +8 dB improvement over baseline (14.67 → 24.36 dB average)
 - **Cross-Platform**: Works on Windows, Linux, macOS, and Web (via WebGPU)
 
-### Current Status (November 2024)
+### Current Status (November 2025)
 
 **Image Codec (LGI)**: ✅ Production-ready foundation
 - Core encoder/decoder functional
