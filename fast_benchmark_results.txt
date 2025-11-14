@@ -1,0 +1,2374 @@
+warning: profiles for the non root package will be ignored, specify profiles at the workspace root:
+package:   /home/greg/gaussian-image-projects/lgi-project/packages/lgi-rs/lgi-wasm/Cargo.toml
+workspace: /home/greg/gaussian-image-projects/lgi-project/packages/lgi-rs/Cargo.toml
+warning: unused import: `Float`
+  --> lgi-math/src/log_cholesky.rs:28:13
+   |
+28 | use crate::{Float, vec::Vector2};
+   |             ^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused variable: `inv_det`
+   --> lgi-math/src/parameterization.rs:172:13
+    |
+172 |         let inv_det = T::one() / det_l;
+    |             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_inv_det`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `l21`
+   --> lgi-math/src/log_cholesky.rs:177:19
+    |
+177 |         let (l11, l21, l22) = self.cholesky_factor();
+    |                   ^^^ help: if this is intentional, prefix it with an underscore: `_l21`
+
+warning: missing documentation for a struct field
+  --> lgi-math/src/vec.rs:16:5
+   |
+16 |     pub x: T,
+   |     ^^^^^^^^
+   |
+note: the lint level is defined here
+  --> lgi-math/src/lib.rs:31:9
+   |
+31 | #![warn(missing_docs)]
+   |         ^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-math/src/vec.rs:17:5
+   |
+17 |     pub y: T,
+   |     ^^^^^^^^
+
+warning: missing documentation for an associated function
+  --> lgi-math/src/vec.rs:22:5
+   |
+22 |     pub const fn new(x: T, y: T) -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+  --> lgi-math/src/vec.rs:27:5
+   |
+27 |     pub fn zero() -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+  --> lgi-math/src/vec.rs:32:5
+   |
+32 |     pub fn one() -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-math/src/vec.rs:37:5
+   |
+37 |     pub fn dot(self, other: Self) -> T {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-math/src/vec.rs:42:5
+   |
+42 |     pub fn length_squared(self) -> T {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-math/src/vec.rs:47:5
+   |
+47 |     pub fn length(self) -> T {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-math/src/vec.rs:52:5
+   |
+52 |     pub fn normalize(self) -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-math/src/vec.rs:58:5
+   |
+58 |     pub fn min(self, other: Self) -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-math/src/vec.rs:63:5
+   |
+63 |     pub fn max(self, other: Self) -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-math/src/vec.rs:68:5
+   |
+68 |     pub fn clamp(self, min: Self, max: Self) -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a type alias
+   --> lgi-math/src/vec.rs:122:1
+    |
+122 | pub type Vec2f32 = Vector2<f32>;
+    | ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a type alias
+   --> lgi-math/src/vec.rs:123:1
+    |
+123 | pub type Vec2f64 = Vector2<f64>;
+    | ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> lgi-math/src/compositing.rs:134:5
+    |
+134 |     pub fn new(mode: AlphaMode) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-math/src/color.rs:13:5
+   |
+13 |     pub r: T,
+   |     ^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-math/src/color.rs:14:5
+   |
+14 |     pub g: T,
+   |     ^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-math/src/color.rs:15:5
+   |
+15 |     pub b: T,
+   |     ^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-math/src/color.rs:16:5
+   |
+16 |     pub a: T,
+   |     ^^^^^^^^
+
+warning: missing documentation for an associated function
+  --> lgi-math/src/color.rs:21:5
+   |
+21 |     pub fn new(r: T, g: T, b: T, a: T) -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+  --> lgi-math/src/color.rs:26:5
+   |
+26 |     pub fn rgb(r: T, g: T, b: T) -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+  --> lgi-math/src/color.rs:31:5
+   |
+31 |     pub fn black() -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+  --> lgi-math/src/color.rs:36:5
+   |
+36 |     pub fn white() -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+  --> lgi-math/src/color.rs:81:5
+   |
+81 |     Linear,
+   |     ^^^^^^
+
+warning: missing documentation for a variant
+  --> lgi-math/src/color.rs:82:5
+   |
+82 |     SRGB,
+   |     ^^^^
+
+warning: missing documentation for a variant
+  --> lgi-math/src/color.rs:83:5
+   |
+83 |     DisplayP3,
+   |     ^^^^^^^^^
+
+warning: missing documentation for a variant
+  --> lgi-math/src/color.rs:84:5
+   |
+84 |     BT2020,
+   |     ^^^^^^
+
+warning: missing documentation for an associated function
+   --> lgi-math/src/transform.rs:122:5
+    |
+122 |     pub fn new(canvas_size: (u32, u32), output_size: (u32, u32)) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `lgi-math` (lib) generated 31 warnings
+   Compiling lgi-core v0.1.0 (/home/greg/gaussian-image-projects/lgi-project/packages/lgi-rs/lgi-core)
+warning: unused import: `LgiError`
+  --> lgi-core/src/initializer.rs:10:34
+   |
+10 | use crate::{ImageBuffer, Result, LgiError};
+   |                                  ^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unexpected `cfg` condition value: `rayon`
+  --> lgi-core/src/renderer.rs:19:7
+   |
+19 | #[cfg(feature = "rayon")]
+   |       ^^^^^^^^^^^^^^^^^
+   |
+   = note: expected values for `feature` are: `default`
+   = help: consider adding `rayon` as a feature in `Cargo.toml`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+   = note: `#[warn(unexpected_cfgs)]` on by default
+
+warning: unexpected `cfg` condition value: `rayon`
+   --> lgi-core/src/renderer.rs:207:11
+    |
+207 |     #[cfg(feature = "rayon")]
+    |           ^^^^^^^^^^^^^^^^^
+    |
+    = note: expected values for `feature` are: `default`
+    = help: consider adding `rayon` as a feature in `Cargo.toml`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+warning: unexpected `cfg` condition value: `rayon`
+   --> lgi-core/src/renderer.rs:259:15
+    |
+259 |         #[cfg(feature = "rayon")]
+    |               ^^^^^^^^^^^^^^^^^
+    |
+    = note: expected values for `feature` are: `default`
+    = help: consider adding `rayon` as a feature in `Cargo.toml`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+warning: unused import: `color::Color4`
+ --> lgi-core/src/ordering.rs:3:81
+  |
+3 | use lgi_math::{Float, gaussian::Gaussian2D, parameterization::Parameterization, color::Color4};
+  |                                                                                 ^^^^^^^^^^^^^
+
+warning: unused import: `lgi_math::color::Color4`
+ --> lgi-core/src/blue_noise_residual.rs:8:5
+  |
+8 | use lgi_math::color::Color4;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `color::Color4`
+ --> lgi-core/src/analytical_triggers.rs:8:63
+  |
+8 | use lgi_math::{gaussian::Gaussian2D, parameterization::Euler, color::Color4};
+  |                                                               ^^^^^^^^^^^^^
+
+warning: unused import: `vec::Vector2`
+ --> lgi-core/src/gradient_upscaling.rs:8:63
+  |
+8 | use lgi_math::{gaussian::Gaussian2D, parameterization::Euler, vec::Vector2, color::Color4};
+  |                                                               ^^^^^^^^^^^^
+
+warning: unused import: `lgi_math::color::Color4`
+ --> lgi-core/src/selective_processing.rs:8:5
+  |
+8 | use lgi_math::color::Color4;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `vec::Vector2`
+ --> lgi-core/src/ewa_splatting.rs:5:63
+  |
+5 | use lgi_math::{gaussian::Gaussian2D, parameterization::Euler, vec::Vector2};
+  |                                                               ^^^^^^^^^^^^
+
+warning: unused import: `color::Color4`
+ --> lgi-core/src/ewa_splatting_v2.rs:6:63
+  |
+6 | use lgi_math::{gaussian::Gaussian2D, parameterization::Euler, color::Color4};
+  |                                                               ^^^^^^^^^^^^^
+
+warning: unused import: `ImageBuffer`
+ --> lgi-core/src/progressive_loading.rs:5:36
+  |
+5 | use crate::{lod_system::LODSystem, ImageBuffer};
+  |                                    ^^^^^^^^^^^
+
+warning: unused import: `parameterization::Parameterization`
+ --> lgi-core/src/progressive.rs:4:45
+  |
+4 | use lgi_math::{Float, gaussian::Gaussian2D, parameterization::Parameterization};
+  |                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `lgi_math::color::Color4`
+ --> lgi-core/src/saliency_detection.rs:4:5
+  |
+4 | use lgi_math::color::Color4;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `color::Color4`
+ --> lgi-core/src/gaussian_splitting.rs:3:77
+  |
+3 | use lgi_math::{gaussian::Gaussian2D, parameterization::Euler, vec::Vector2, color::Color4};
+  |                                                                             ^^^^^^^^^^^^^
+
+warning: unused import: `crate::ImageBuffer`
+ --> lgi-core/src/gaussian_splitting.rs:4:5
+  |
+4 | use crate::ImageBuffer;
+  |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::ImageBuffer`
+ --> lgi-core/src/adaptive_splitting.rs:4:5
+  |
+4 | use crate::ImageBuffer;
+  |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `ImageBuffer`
+ --> lgi-core/src/frangi_vesselness.rs:3:13
+  |
+3 | use crate::{ImageBuffer, structure_tensor::StructureTensorField};
+  |             ^^^^^^^^^^^
+
+warning: unused import: `lgi_math::color::Color4`
+  --> lgi-core/src/laplacian.rs:12:5
+   |
+12 | use lgi_math::color::Color4;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::ImageBuffer`
+  --> lgi-core/src/position_probability_map.rs:11:5
+   |
+11 | use crate::ImageBuffer;
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `rand::seq::SliceRandom`
+   --> lgi-core/src/position_probability_map.rs:159:13
+    |
+159 |         use rand::seq::SliceRandom;
+    |             ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `rand::thread_rng`
+   --> lgi-core/src/position_probability_map.rs:160:13
+    |
+160 |         use rand::thread_rng;
+    |             ^^^^^^^^^^^^^^^^
+
+warning: unused import: `Float`
+ --> lgi-core/src/initializer.rs:9:16
+  |
+9 | use lgi_math::{Float, gaussian::Gaussian2D, parameterization::Euler, color::Color4, vec::Vector2};
+  |                ^^^^^
+
+warning: unused import: `Float`
+ --> lgi-core/src/renderer.rs:4:5
+  |
+4 |     Float, gaussian::Gaussian2D, parameterization::Parameterization,
+  |     ^^^^^
+
+warning: unused import: `Float`
+ --> lgi-core/src/tiling.rs:3:16
+  |
+3 | use lgi_math::{Float, gaussian::Gaussian2D, parameterization::Parameterization, vec::Vector2};
+  |                ^^^^^
+
+warning: unused import: `Float`
+ --> lgi-core/src/progressive.rs:4:16
+  |
+4 | use lgi_math::{Float, gaussian::Gaussian2D, parameterization::Parameterization};
+  |                ^^^^^
+
+warning: unused variable: `i`
+   --> lgi-core/src/ordering.rs:101:17
+    |
+101 |             for i in 0..(num_levels - 1) {
+    |                 ^ help: if this is intentional, prefix it with an underscore: `_i`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `rendered`
+   --> lgi-core/src/analytical_triggers.rs:231:63
+    |
+231 |     fn generate_masks(&mut self, original: &ImageBuffer<f32>, rendered: &ImageBuffer<f32>) {
+    |                                                               ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_rendered`
+
+warning: variable does not need to be mutable
+  --> lgi-core/src/selective_processing.rs:80:13
+   |
+80 |         let mut mask = initial_mask.to_vec();
+   |             ----^^^^
+   |             |
+   |             help: remove this `mut`
+   |
+   = note: `#[warn(unused_mut)]` on by default
+
+warning: unused variable: `gaussian`
+  --> lgi-core/src/ms_ssim_loss.rs:62:17
+   |
+62 |         for (i, gaussian) in gaussians.iter().enumerate() {
+   |                 ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_gaussian`
+
+warning: unused variable: `canvas_width`
+  --> lgi-core/src/progressive.rs:17:5
+   |
+17 |     canvas_width: u32,
+   |     ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_canvas_width`
+
+warning: unused variable: `canvas_height`
+  --> lgi-core/src/progressive.rs:18:5
+   |
+18 |     canvas_height: u32,
+   |     ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_canvas_height`
+
+warning: unused variable: `c`
+  --> lgi-core/src/saliency_detection.rs:23:30
+   |
+23 |                 if let (Some(c), Some(left), Some(right), Some(up), Some(down)) = (
+   |                              ^ help: if this is intentional, prefix it with an underscore: `_c`
+
+warning: unused variable: `error_map`
+  --> lgi-core/src/gaussian_splitting.rs:20:9
+   |
+20 |         error_map: &[f32],
+   |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_error_map`
+
+warning: unused variable: `image_width`
+  --> lgi-core/src/gaussian_splitting.rs:21:9
+   |
+21 |         image_width: u32,
+   |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_image_width`
+
+warning: unused variable: `image_height`
+  --> lgi-core/src/gaussian_splitting.rs:22:9
+   |
+22 |         image_height: u32,
+   |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_image_height`
+
+warning: variable does not need to be mutable
+  --> lgi-core/src/specular_detection.rs:18:13
+   |
+18 |         let mut luminances: Vec<f32> = image.data.iter()
+   |             ----^^^^^^^^^^
+   |             |
+   |             help: remove this `mut`
+
+warning: unused variable: `rd_cost`
+   --> lgi-core/src/rate_distortion.rs:248:21
+    |
+248 |                 let rd_cost = self.compute_cost(-distortion_reduction, rate);
+    |                     ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_rd_cost`
+
+warning: unused variable: `iter`
+  --> lgi-core/src/poisson_solver.rs:59:9
+   |
+59 |     for iter in 0..config.max_iterations {
+   |         ^^^^ help: if this is intentional, prefix it with an underscore: `_iter`
+
+warning: type `GaussianGradient` is more private than the item `MsssimLoss::compute_gradients_approx`
+  --> lgi-core/src/ms_ssim_loss.rs:50:5
+   |
+50 | /     pub fn compute_gradients_approx(
+51 | |         &self,
+52 | |         gaussians: &[Gaussian2D<f32, Euler<f32>>],
+53 | |         rendered: &ImageBuffer<f32>,
+54 | |         target: &ImageBuffer<f32>,
+55 | |         renderer: impl Fn(&[Gaussian2D<f32, Euler<f32>>], u32, u32) -> ImageBuffer<f32>,
+56 | |     ) -> Vec<GaussianGradient> {
+   | |______________________________^ method `MsssimLoss::compute_gradients_approx` is reachable at visibility `pub`
+   |
+note: but type `GaussianGradient` is only usable at visibility `pub(self)`
+  --> lgi-core/src/ms_ssim_loss.rs:90:1
+   |
+90 | struct GaussianGradient {
+   | ^^^^^^^^^^^^^^^^^^^^^^^
+   = note: `#[warn(private_interfaces)]` on by default
+
+warning: field `nearest_edge` is never read
+  --> lgi-core/src/geodesic_edt.rs:46:5
+   |
+38 | pub struct GeodesicEDT {
+   |            ----------- field in this struct
+...
+46 |     nearest_edge: Vec<Option<(u32, u32)>>,
+   |     ^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: fields `tile_width` and `tile_height` are never read
+ --> lgi-core/src/tile_cache.rs:8:5
+  |
+6 | pub struct TileCache {
+  |            --------- fields in this struct
+7 |     tiles: HashMap<(u32, u32), ImageBuffer<f32>>,
+8 |     tile_width: u32,
+  |     ^^^^^^^^^^
+9 |     tile_height: u32,
+  |     ^^^^^^^^^^^
+
+warning: field `c2` is never read
+  --> lgi-core/src/lbfgs.rs:19:5
+   |
+10 | pub struct LBFGS {
+   |            ----- field in this struct
+...
+19 |     c2: f32,  // Wolfe condition constant (typically 0.9)
+   |     ^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/geodesic_edt.rs:39:5
+   |
+39 |     pub width: u32,
+   |     ^^^^^^^^^^^^^^
+   |
+note: the lint level is defined here
+  --> lgi-core/src/lib.rs:12:9
+   |
+12 | #![warn(missing_docs)]
+   |         ^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/geodesic_edt.rs:40:5
+   |
+40 |     pub height: u32,
+   |     ^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/guided_filter.rs:12:5
+   |
+12 |     pub radius: usize,   // Window radius (default: 4-8)
+   |     ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/guided_filter.rs:13:5
+   |
+13 |     pub epsilon: f32,    // Regularization (default: 0.01² = 0.0001)
+   |     ^^^^^^^^^^^^^^^^
+
+warning: variable `mean_I` should have a snake case name
+  --> lgi-core/src/guided_filter.rs:50:13
+   |
+50 |         let mean_I = box_filter_gray(&guide_gray, width, height, self.radius);
+   |             ^^^^^^ help: convert the identifier to snake case (notice the capitalization): `mean_i`
+   |
+   = note: `#[warn(non_snake_case)]` on by default
+
+warning: variable `corr_Ip_r` should have a snake case name
+  --> lgi-core/src/guided_filter.rs:56:13
+   |
+56 |         let corr_Ip_r = box_filter_correlation(&guide_gray, &input.data, width, height, self.radius, |c| c.r);
+   |             ^^^^^^^^^ help: convert the identifier to snake case (notice the capitalization): `corr_ip_r`
+
+warning: variable `corr_Ip_g` should have a snake case name
+  --> lgi-core/src/guided_filter.rs:57:13
+   |
+57 |         let corr_Ip_g = box_filter_correlation(&guide_gray, &input.data, width, height, self.radius, |c| c.g);
+   |             ^^^^^^^^^ help: convert the identifier to snake case (notice the capitalization): `corr_ip_g`
+
+warning: variable `corr_Ip_b` should have a snake case name
+  --> lgi-core/src/guided_filter.rs:58:13
+   |
+58 |         let corr_Ip_b = box_filter_correlation(&guide_gray, &input.data, width, height, self.radius, |c| c.b);
+   |             ^^^^^^^^^ help: convert the identifier to snake case (notice the capitalization): `corr_ip_b`
+
+warning: variable `var_I` should have a snake case name
+  --> lgi-core/src/guided_filter.rs:60:13
+   |
+60 |         let var_I = box_filter_variance(&guide_gray, &mean_I, width, height, self.radius);
+   |             ^^^^^ help: convert the identifier to snake case (notice the capitalization): `var_i`
+
+warning: variable `I` should have a snake case name
+  --> lgi-core/src/guided_filter.rs:93:17
+   |
+93 |             let I = guide_gray[i];
+   |                 ^ help: convert the identifier to snake case (notice the capitalization): `i`
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/texture_map.rs:15:5
+   |
+15 |     pub height: usize,
+   |     ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/blue_noise_residual.rs:18:5
+   |
+18 |     pub amplitude: f32,
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/blue_noise_residual.rs:19:5
+   |
+19 |     pub phase_x: f32,
+   |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/blue_noise_residual.rs:20:5
+   |
+20 |     pub phase_y: f32,
+   |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/blue_noise_residual.rs:24:5
+   |
+24 |     pub height: u32,
+   |     ^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/analytical_triggers.rs:37:5
+   |
+37 |     pub texture_mask: Vec<f32>,     // Where to add textures
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/analytical_triggers.rs:38:5
+   |
+38 |     pub residual_mask: Vec<f32>,    // Where to add blue-noise
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> lgi-core/src/analytical_triggers.rs:256:5
+    |
+256 |     pub fn should_add_residuals(&self) -> bool {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> lgi-core/src/analytical_triggers.rs:260:5
+    |
+260 |     pub fn should_refine_gaussians(&self) -> bool {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> lgi-core/src/analytical_triggers.rs:264:5
+    |
+264 |     pub fn should_split_gaussians(&self) -> bool {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/selective_processing.rs:13:5
+   |
+13 |     pub width: u32,
+   |     ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/selective_processing.rs:14:5
+   |
+14 |     pub height: u32,
+   |     ^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> lgi-core/src/selective_processing.rs:135:5
+    |
+135 |     pub complexity_map: ComplexityMap,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> lgi-core/src/selective_processing.rs:136:5
+    |
+136 |     pub triggers: AnalyticalTriggers,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/lod_system.rs:69:5
+   |
+69 |     pub medium_count: usize,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/lod_system.rs:70:5
+   |
+70 |     pub fine_count: usize,
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> lgi-core/src/lod_system.rs:205:5
+    |
+205 |     pub total_gaussians: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> lgi-core/src/lod_system.rs:206:5
+    |
+206 |     pub coarse_count: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> lgi-core/src/lod_system.rs:207:5
+    |
+207 |     pub coarse_percent: f32,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> lgi-core/src/lod_system.rs:208:5
+    |
+208 |     pub medium_count: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> lgi-core/src/lod_system.rs:209:5
+    |
+209 |     pub medium_percent: f32,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> lgi-core/src/lod_system.rs:210:5
+    |
+210 |     pub fine_count: usize,
+    |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> lgi-core/src/lod_system.rs:211:5
+    |
+211 |     pub fine_percent: f32,
+    |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/trigger_actions.rs:12:5
+   |
+12 |     pub err_threshold: f32,    // Entropy-residual ratio
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/trigger_actions.rs:13:5
+   |
+13 |     pub lcc_threshold: f32,    // Laplacian consistency
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/trigger_actions.rs:14:5
+   |
+14 |     pub agd_threshold: f32,    // Anisotropy gradient divergence
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/trigger_actions.rs:15:5
+   |
+15 |     pub jci_threshold: f32,    // Jacobian condition index
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/trigger_actions.rs:16:5
+   |
+16 |     pub rch_threshold: f32,    // Rate-curvature heuristic
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/trigger_actions.rs:17:5
+   |
+17 |     pub spec_threshold: f32,   // Structure-perceptual error
+   |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+  --> lgi-core/src/ms_ssim_loss.rs:24:5
+   |
+24 |     pub fn new(alpha: f32) -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/ms_ssim_gradients.rs:21:5
+   |
+21 |     pub c2: f32,
+   |     ^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+  --> lgi-core/src/edge_weighted_loss.rs:25:5
+   |
+25 |     pub fn new(edge_weight: f32, edge_threshold: f32) -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+  --> lgi-core/src/screen_space_culling.rs:19:5
+   |
+19 |     pub fn new(min_sigma_px: f32) -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: variable `V_xx` should have a snake case name
+  --> lgi-core/src/ewa_splatting_v2.rs:83:13
+   |
+83 |         let V_xx = sigma_xx + self.filter_bandwidth;
+   |             ^^^^ help: convert the identifier to snake case (notice the capitalization): `v_xx`
+
+warning: variable `V_yy` should have a snake case name
+  --> lgi-core/src/ewa_splatting_v2.rs:84:13
+   |
+84 |         let V_yy = sigma_yy + self.filter_bandwidth;
+   |             ^^^^ help: convert the identifier to snake case (notice the capitalization): `v_yy`
+
+warning: variable `V_xy` should have a snake case name
+  --> lgi-core/src/ewa_splatting_v2.rs:85:13
+   |
+85 |         let V_xy = sigma_xy;  // Off-diagonal unchanged
+   |             ^^^^ help: convert the identifier to snake case (notice the capitalization): `v_xy`
+
+warning: variable `det_V` should have a snake case name
+  --> lgi-core/src/ewa_splatting_v2.rs:88:13
+   |
+88 |         let det_V = V_xx * V_yy - V_xy * V_xy;
+   |             ^^^^^ help: convert the identifier to snake case (notice the capitalization): `det_v`
+
+warning: variable `inv_V_xx` should have a snake case name
+  --> lgi-core/src/ewa_splatting_v2.rs:93:13
+   |
+93 |         let inv_V_xx = V_yy / det_V;
+   |             ^^^^^^^^ help: convert the identifier to snake case (notice the capitalization): `inv_v_xx`
+
+warning: variable `inv_V_yy` should have a snake case name
+  --> lgi-core/src/ewa_splatting_v2.rs:94:13
+   |
+94 |         let inv_V_yy = V_xx / det_V;
+   |             ^^^^^^^^ help: convert the identifier to snake case (notice the capitalization): `inv_v_yy`
+
+warning: variable `inv_V_xy` should have a snake case name
+  --> lgi-core/src/ewa_splatting_v2.rs:95:13
+   |
+95 |         let inv_V_xy = -V_xy / det_V;
+   |             ^^^^^^^^ help: convert the identifier to snake case (notice the capitalization): `inv_v_xy`
+
+warning: missing documentation for a variant
+  --> lgi-core/src/progressive_loading.rs:10:5
+   |
+10 |     Preview = 0,   // Band 0 only (~60% quality, fast)
+   |     ^^^^^^^
+
+warning: missing documentation for a variant
+  --> lgi-core/src/progressive_loading.rs:11:5
+   |
+11 |     Usable = 1,    // Bands 0+1 (~85% quality)
+   |     ^^^^^^
+
+warning: missing documentation for a variant
+  --> lgi-core/src/progressive_loading.rs:12:5
+   |
+12 |     Full = 2,      // All bands (100% quality)
+   |     ^^^^
+
+warning: missing documentation for an associated function
+  --> lgi-core/src/progressive_loading.rs:21:5
+   |
+21 |     pub fn new(gaussians: &[Gaussian2D<f32, Euler<f32>>]) -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+ --> lgi-core/src/progressive.rs:9:5
+  |
+9 |     pub gaussian_index: usize,
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/progressive.rs:10:5
+   |
+10 |     pub importance: f32,
+   |     ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+  --> lgi-core/src/progressive.rs:88:5
+   |
+88 |     Coarse,   // Large Gaussians (background, large structures)
+   |     ^^^^^^
+
+warning: missing documentation for a variant
+  --> lgi-core/src/progressive.rs:89:5
+   |
+89 |     Medium,   // Medium Gaussians (details)
+   |     ^^^^^^
+
+warning: missing documentation for a variant
+  --> lgi-core/src/progressive.rs:90:5
+   |
+90 |     Fine,     // Small Gaussians (fine details, edges)
+   |     ^^^^
+
+warning: missing documentation for a method
+  --> lgi-core/src/progressive.rs:94:5
+   |
+94 |     pub fn to_u8(&self) -> u8 {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> lgi-core/src/progressive.rs:102:5
+    |
+102 |     pub fn from_u8(value: u8) -> Option<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+ --> lgi-core/src/saliency_detection.rs:6:1
+  |
+6 | pub struct SaliencyDetector {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+ --> lgi-core/src/saliency_detection.rs:7:5
+  |
+7 |     pub threshold: f32,
+  |     ^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-core/src/saliency_detection.rs:17:5
+   |
+17 |     pub fn compute_saliency_map(&self, image: &ImageBuffer<f32>) -> Vec<f32> {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-core/src/saliency_detection.rs:40:5
+   |
+40 |     pub fn get_salient_regions(&self, saliency_map: &[f32]) -> Vec<bool> {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+ --> lgi-core/src/viewport_culling.rs:5:1
+  |
+5 | pub struct ViewportCuller;
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+  --> lgi-core/src/viewport_culling.rs:8:5
+   |
+ 8 | /     pub fn cull_outside_viewport<'a>(
+ 9 | |         gaussians: &'a [Gaussian2D<f32, Euler<f32>>],
+10 | |         viewport_x: f32,
+11 | |         viewport_y: f32,
+...  |
+14 | |         margin: f32,  // Extra margin for Gaussian footprints
+15 | |     ) -> Vec<&'a Gaussian2D<f32, Euler<f32>>> {
+   | |_____________________________________________^
+
+warning: missing documentation for a struct
+ --> lgi-core/src/gaussian_splitting.rs:6:1
+  |
+6 | pub struct GaussianSplitter {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+ --> lgi-core/src/gaussian_splitting.rs:7:5
+  |
+7 |     pub split_threshold: f32,  // Error threshold for splitting
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-core/src/gaussian_splitting.rs:17:5
+   |
+17 | /     pub fn split_gaussian(
+18 | |         &self,
+19 | |         gaussian: &Gaussian2D<f32, Euler<f32>>,
+20 | |         error_map: &[f32],
+21 | |         image_width: u32,
+22 | |         image_height: u32,
+23 | |     ) -> Vec<Gaussian2D<f32, Euler<f32>>> {
+   | |_________________________________________^
+
+warning: missing documentation for a struct
+ --> lgi-core/src/gaussian_merging.rs:5:1
+  |
+5 | pub struct GaussianMerger {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+ --> lgi-core/src/gaussian_merging.rs:6:5
+  |
+6 |     pub merge_distance_threshold: f32,
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+ --> lgi-core/src/gaussian_merging.rs:7:5
+  |
+7 |     pub color_similarity_threshold: f32,
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-core/src/gaussian_merging.rs:20:5
+   |
+20 | /     pub fn merge_pair(
+21 | |         &self,
+22 | |         g1: &Gaussian2D<f32, Euler<f32>>,
+23 | |         g2: &Gaussian2D<f32, Euler<f32>>,
+24 | |     ) -> Gaussian2D<f32, Euler<f32>> {
+   | |____________________________________^
+
+warning: missing documentation for a method
+  --> lgi-core/src/gaussian_merging.rs:50:5
+   |
+50 |     pub fn can_merge(&self, g1: &Gaussian2D<f32, Euler<f32>>, g2: &Gaussian2D<f32, Euler<f32>>) -> bool {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+ --> lgi-core/src/adaptive_splitting.rs:6:1
+  |
+6 | pub struct AdaptiveSplitter {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+ --> lgi-core/src/adaptive_splitting.rs:7:5
+  |
+7 |     pub error_percentile: f32,  // Top K% error regions to split
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+ --> lgi-core/src/adaptive_splitting.rs:8:5
+  |
+8 |     pub max_gaussians: usize,
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-core/src/adaptive_splitting.rs:21:5
+   |
+21 | /     pub fn find_split_locations(
+22 | |         &self,
+23 | |         error_map: &[f32],
+24 | |         width: u32,
+25 | |         height: u32,
+26 | |     ) -> Vec<(u32, u32)> {
+   | |________________________^
+
+warning: missing documentation for a method
+  --> lgi-core/src/adaptive_splitting.rs:39:5
+   |
+39 | /     pub fn split_at_locations(
+40 | |         &self,
+41 | |         gaussians: &[Gaussian2D<f32, Euler<f32>>],
+42 | |         locations: &[(u32, u32)],
+43 | |         width: u32,
+44 | |         height: u32,
+45 | |     ) -> Vec<Gaussian2D<f32, Euler<f32>>> {
+   | |_________________________________________^
+
+warning: missing documentation for a struct
+ --> lgi-core/src/tile_cache.rs:6:1
+  |
+6 | pub struct TileCache {
+  | ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+  --> lgi-core/src/tile_cache.rs:14:5
+   |
+14 |     pub fn new(tile_width: u32, tile_height: u32, max_tiles: usize) -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-core/src/tile_cache.rs:23:5
+   |
+23 |     pub fn get(&self, tile_x: u32, tile_y: u32) -> Option<&ImageBuffer<f32>> {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-core/src/tile_cache.rs:27:5
+   |
+27 |     pub fn insert(&mut self, tile_x: u32, tile_y: u32, tile: ImageBuffer<f32>) {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-core/src/tile_cache.rs:37:5
+   |
+37 |     pub fn clear(&mut self) {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+ --> lgi-core/src/specular_detection.rs:5:1
+  |
+5 | pub struct SpecularDetector {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+ --> lgi-core/src/specular_detection.rs:6:5
+  |
+6 |     pub percentile: f32,  // e.g., 95th percentile
+  |     ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-core/src/specular_detection.rs:16:5
+   |
+16 |     pub fn detect_speculars(&self, image: &ImageBuffer<f32>) -> Vec<bool> {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+ --> lgi-core/src/text_stroke_detection.rs:5:1
+  |
+5 | pub struct TextStrokeDetector {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+ --> lgi-core/src/text_stroke_detection.rs:6:5
+  |
+6 |     pub coherence_threshold: f32,  // > 0.8 for strokes
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+ --> lgi-core/src/text_stroke_detection.rs:7:5
+  |
+7 |     pub width_max: f32,  // < 2 pixels for text
+  |     ^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-core/src/text_stroke_detection.rs:20:5
+   |
+20 | /     pub fn detect_strokes(
+21 | |         &self,
+22 | |         image: &ImageBuffer<f32>,
+23 | |         tensor_field: &StructureTensorField,
+24 | |     ) -> Vec<bool> {
+   | |__________________^
+
+warning: missing documentation for a method
+  --> lgi-core/src/text_stroke_detection.rs:46:5
+   |
+46 | /     pub fn create_stroke_preset(
+47 | |         &self,
+48 | |         position: (f32, f32),
+49 | |         tangent_angle: f32,
+50 | |         color: (f32, f32, f32),
+51 | |     ) -> lgi_math::gaussian::Gaussian2D<f32, lgi_math::parameterization::Euler<f32>> {
+   | |____________________________________________________________________________________^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/rate_distortion.rs:18:5
+   |
+18 |     pub profile: LGIQProfile,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/rate_distortion.rs:19:5
+   |
+19 |     pub bits_per_gaussian: f32,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+ --> lgi-core/src/perceptual_weighting.rs:5:1
+  |
+5 | pub struct PerceptualWeighter {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+ --> lgi-core/src/perceptual_weighting.rs:6:5
+  |
+6 |     pub use_ms_ssim: bool,
+  |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+ --> lgi-core/src/perceptual_weighting.rs:7:5
+  |
+7 |     pub use_edge_weight: bool,
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+ --> lgi-core/src/perceptual_weighting.rs:8:5
+  |
+8 |     pub use_saliency: bool,
+  |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-core/src/perceptual_weighting.rs:22:5
+   |
+22 | /     pub fn compute_weight_map(
+23 | |         &self,
+24 | |         image: &ImageBuffer<f32>,
+25 | |         edge_map: Option<&[f32]>,
+26 | |         saliency_map: Option<&[f32]>,
+27 | |     ) -> Vec<f32> {
+   | |_________________^
+
+warning: missing documentation for a function
+ --> lgi-core/src/hilbert_ordering.rs:5:1
+  |
+5 | pub fn hilbert_index(x: u32, y: u32, order: u32) -> u32 {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a function
+  --> lgi-core/src/hilbert_ordering.rs:19:1
+   |
+19 | / pub fn sort_by_hilbert(
+20 | |     gaussians: &mut [Gaussian2D<f32, Euler<f32>>],
+21 | |     width: u32,
+22 | |     height: u32,
+23 | | ) {
+   | |_^
+
+warning: missing documentation for a struct
+ --> lgi-core/src/frangi_vesselness.rs:5:1
+  |
+5 | pub struct FrangiFilter {
+  | ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+ --> lgi-core/src/frangi_vesselness.rs:6:5
+  |
+6 |     pub alpha: f32,  // Plate-like structures (0.5)
+  |     ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+ --> lgi-core/src/frangi_vesselness.rs:7:5
+  |
+7 |     pub beta: f32,   // Background (15.0)
+  |     ^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+ --> lgi-core/src/frangi_vesselness.rs:8:5
+  |
+8 |     pub c: f32,      // Second order structureness (500.0)
+  |     ^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-core/src/frangi_vesselness.rs:18:5
+   |
+18 | /     pub fn compute_vesselness(
+19 | |         &self,
+20 | |         tensor_field: &StructureTensorField,
+21 | |     ) -> Vec<f32> {
+   | |_________________^
+
+warning: missing documentation for a struct
+ --> lgi-core/src/coherence_enhancing_diffusion.rs:5:1
+  |
+5 | pub struct CoherenceEnhancingDiffusion {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+ --> lgi-core/src/coherence_enhancing_diffusion.rs:6:5
+  |
+6 |     pub iterations: usize,
+  |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+ --> lgi-core/src/coherence_enhancing_diffusion.rs:7:5
+  |
+7 |     pub lambda: f32,
+  |     ^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+ --> lgi-core/src/coherence_enhancing_diffusion.rs:8:5
+  |
+8 |     pub alpha: f32,
+  |     ^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-core/src/coherence_enhancing_diffusion.rs:18:5
+   |
+18 |     pub fn enhance(&self, image: &ImageBuffer<f32>, tensor_field: &StructureTensorField) -> ImageBuffer<f32> {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an enum
+ --> lgi-core/src/quantization.rs:4:1
+  |
+4 | pub enum LGIQProfile {
+  | ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+ --> lgi-core/src/quantization.rs:5:5
+  |
+5 |     Baseline,   // 11 bytes/Gaussian
+  |     ^^^^^^^^
+
+warning: missing documentation for a variant
+ --> lgi-core/src/quantization.rs:6:5
+  |
+6 |     Standard,   // 13 bytes/Gaussian
+  |     ^^^^^^^^
+
+warning: missing documentation for a variant
+ --> lgi-core/src/quantization.rs:7:5
+  |
+7 |     HighFidelity, // 18 bytes/Gaussian
+  |     ^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+ --> lgi-core/src/quantization.rs:8:5
+  |
+8 |     Extended,   // 36 bytes/Gaussian
+  |     ^^^^^^^^
+
+warning: missing documentation for a struct
+  --> lgi-core/src/quantization.rs:11:1
+   |
+11 | pub struct QuantizedGaussian {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/quantization.rs:12:5
+   |
+12 |     pub position: [u16; 2],     // 16-bit
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/quantization.rs:13:5
+   |
+13 |     pub scale: [u16; 2],        // Log-scale, 12 or 14-bit
+   |     ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/quantization.rs:14:5
+   |
+14 |     pub rotation: u16,          // 12 or 14-bit
+   |     ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/quantization.rs:15:5
+   |
+15 |     pub color: [u16; 3],        // 8 or 10-bit per channel
+   |     ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/quantization.rs:16:5
+   |
+16 |     pub opacity: u16,           // 8 or 10-bit
+   |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/quantization.rs:17:5
+   |
+17 |     pub profile: LGIQProfile,   // Profile type for correct dequantization
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a constant
+ --> lgi-core/src/container_format.rs:6:1
+  |
+6 | pub const LGI_MAGIC: &[u8; 4] = b"LGI\0";
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a variant
+  --> lgi-core/src/container_format.rs:12:5
+   |
+12 |     Euler = 0,      // σx, σy, θ (rotation)
+   |     ^^^^^
+
+warning: missing documentation for a variant
+  --> lgi-core/src/container_format.rs:13:5
+   |
+13 |     Cholesky = 1,   // L11, L21, L22 (Cholesky factors)
+   |     ^^^^^^^^
+
+warning: missing documentation for a variant
+  --> lgi-core/src/container_format.rs:14:5
+   |
+14 |     LogRadii = 2,   // log(σx), log(σy), θ
+   |     ^^^^^^^^
+
+warning: missing documentation for a variant
+  --> lgi-core/src/container_format.rs:15:5
+   |
+15 |     InvCov = 3,     // Inverse covariance elements
+   |     ^^^^^^
+
+warning: missing documentation for a variant
+  --> lgi-core/src/container_format.rs:16:5
+   |
+16 |     Raw = 255,      // Uncompressed f32 (lossless)
+   |     ^^^
+
+warning: missing documentation for a variant
+  --> lgi-core/src/container_format.rs:23:5
+   |
+23 |     None = 0,
+   |     ^^^^
+
+warning: missing documentation for a variant
+  --> lgi-core/src/container_format.rs:24:5
+   |
+24 |     Zstd = 1,       // zstd compression
+   |     ^^^^
+
+warning: missing documentation for a variant
+  --> lgi-core/src/container_format.rs:25:5
+   |
+25 |     Lz4 = 2,        // LZ4 compression
+   |     ^^^
+
+warning: missing documentation for a variant
+  --> lgi-core/src/container_format.rs:26:5
+   |
+26 |     Brotli = 3,     // Brotli compression
+   |     ^^^^^^
+
+warning: missing documentation for a variant
+  --> lgi-core/src/container_format.rs:27:5
+   |
+27 |     Delta = 16,     // Delta coding (positions)
+   |     ^^^^^
+
+warning: missing documentation for a variant
+  --> lgi-core/src/container_format.rs:28:5
+   |
+28 |     Predictive = 32, // Predictive coding (scales)
+   |     ^^^^^^^^^^
+
+warning: missing documentation for a variant
+  --> lgi-core/src/container_format.rs:29:5
+   |
+29 |     VectorQuant = 64, // Vector quantization
+   |     ^^^^^^^^^^^
+
+warning: missing documentation for a variant
+  --> lgi-core/src/container_format.rs:36:5
+   |
+36 |     Bit8 = 8,
+   |     ^^^^
+
+warning: missing documentation for a variant
+  --> lgi-core/src/container_format.rs:37:5
+   |
+37 |     Bit10 = 10,
+   |     ^^^^^
+
+warning: missing documentation for a variant
+  --> lgi-core/src/container_format.rs:38:5
+   |
+38 |     Bit12 = 12,
+   |     ^^^^^
+
+warning: missing documentation for a variant
+  --> lgi-core/src/container_format.rs:39:5
+   |
+39 |     Bit14 = 14,
+   |     ^^^^^
+
+warning: missing documentation for a variant
+  --> lgi-core/src/container_format.rs:40:5
+   |
+40 |     Bit16 = 16,
+   |     ^^^^^
+
+warning: missing documentation for a variant
+  --> lgi-core/src/container_format.rs:41:5
+   |
+41 |     Float32 = 32,  // Lossless
+   |     ^^^^^^^
+
+warning: module `FeatureFlags` should have a snake case name
+  --> lgi-core/src/container_format.rs:45:9
+   |
+45 | pub mod FeatureFlags {
+   |         ^^^^^^^^^^^^ help: convert the identifier to snake case: `feature_flags`
+
+warning: missing documentation for a struct
+  --> lgi-core/src/container_format.rs:57:1
+   |
+57 | pub struct LGIHeader {
+   | ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/container_format.rs:58:5
+   |
+58 |     pub version_major: u16,
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/container_format.rs:59:5
+   |
+59 |     pub version_minor: u16,
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/container_format.rs:60:5
+   |
+60 |     pub canvas_width: u32,
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/container_format.rs:61:5
+   |
+61 |     pub canvas_height: u32,
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/container_format.rs:62:5
+   |
+62 |     pub colorspace: u16,        // 0=sRGB, 1=Linear, 2=P3, 3=BT.2020
+   |     ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/container_format.rs:63:5
+   |
+63 |     pub bitdepth: u8,           // BitDepth enum
+   |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/container_format.rs:64:5
+   |
+64 |     pub alpha_mode: u8,         // 0=None, 1=Straight, 2=Premultiplied
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/container_format.rs:65:5
+   |
+65 |     pub param_encoding: u16,    // ParamEncoding enum
+   |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/container_format.rs:66:5
+   |
+66 |     pub compression_flags: u16, // CompressionMethod flags (can combine)
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/container_format.rs:67:5
+   |
+67 |     pub gaussian_count: u32,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/container_format.rs:68:5
+   |
+68 |     pub feature_flags: u32,     // FeatureFlags bits
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/container_format.rs:69:5
+   |
+69 |     pub background_color: u32,  // RGBA8
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/container_format.rs:70:5
+   |
+70 |     pub index_offset: u64,      // Offset to spatial index (0 = none)
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+   --> lgi-core/src/container_format.rs:147:1
+    |
+147 | pub struct LGIChunk {
+    | ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> lgi-core/src/container_format.rs:148:5
+    |
+148 |     pub chunk_type: [u8; 4],
+    |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+   --> lgi-core/src/container_format.rs:149:5
+    |
+149 |     pub data: Vec<u8>,
+    |     ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> lgi-core/src/container_format.rs:153:5
+    |
+153 |     pub fn new(chunk_type: &[u8; 4], data: Vec<u8>) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> lgi-core/src/container_format.rs:160:5
+    |
+160 |     pub fn write_to<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+   --> lgi-core/src/container_format.rs:172:5
+    |
+172 |     pub fn read_from<R: Read>(reader: &mut R) -> std::io::Result<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: module `ChunkTypes` should have a snake case name
+   --> lgi-core/src/container_format.rs:219:9
+    |
+219 | pub mod ChunkTypes {
+    |         ^^^^^^^^^^ help: convert the identifier to snake case: `chunk_types`
+
+warning: missing documentation for a constant
+  --> lgi-core/src/container_format.rs:46:5
+   |
+46 |     pub const HAS_TEXTURES: u32 = 1 << 0;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a constant
+  --> lgi-core/src/container_format.rs:47:5
+   |
+47 |     pub const HAS_LOD: u32 = 1 << 1;
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a constant
+  --> lgi-core/src/container_format.rs:48:5
+   |
+48 |     pub const HAS_SPATIAL_INDEX: u32 = 1 << 2;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a constant
+  --> lgi-core/src/container_format.rs:49:5
+   |
+49 |     pub const HAS_PROGRESSIVE: u32 = 1 << 3;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a constant
+  --> lgi-core/src/container_format.rs:50:5
+   |
+50 |     pub const HAS_TILING: u32 = 1 << 4;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a constant
+  --> lgi-core/src/container_format.rs:51:5
+   |
+51 |     pub const HAS_METADATA: u32 = 1 << 5;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a constant
+  --> lgi-core/src/container_format.rs:52:5
+   |
+52 |     pub const IS_HDR: u32 = 1 << 6;
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a constant
+  --> lgi-core/src/container_format.rs:53:5
+   |
+53 |     pub const HAS_BLUE_NOISE: u32 = 1 << 7;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a constant
+   --> lgi-core/src/container_format.rs:220:5
+    |
+220 |     pub const HEAD: &[u8; 4] = b"HEAD";  // Header
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a constant
+   --> lgi-core/src/container_format.rs:221:5
+    |
+221 |     pub const GAUS: &[u8; 4] = b"GAUS";  // Gaussian data
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a constant
+   --> lgi-core/src/container_format.rs:222:5
+    |
+222 |     pub const TILE: &[u8; 4] = b"TILE";  // Tile boundaries
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a constant
+   --> lgi-core/src/container_format.rs:223:5
+    |
+223 |     pub const LODC: &[u8; 4] = b"LODC";  // LOD bands
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a constant
+   --> lgi-core/src/container_format.rs:224:5
+    |
+224 |     pub const PRGS: &[u8; 4] = b"PRGS";  // Progressive ordering
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a constant
+   --> lgi-core/src/container_format.rs:225:5
+    |
+225 |     pub const INDE: &[u8; 4] = b"INDE";  // Spatial index
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a constant
+   --> lgi-core/src/container_format.rs:226:5
+    |
+226 |     pub const META: &[u8; 4] = b"meta";  // Metadata
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a constant
+   --> lgi-core/src/container_format.rs:227:5
+    |
+227 |     pub const ICCP: &[u8; 4] = b"iCCP";  // ICC profile
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a constant
+   --> lgi-core/src/container_format.rs:228:5
+    |
+228 |     pub const EXIF: &[u8; 4] = b"eXIf";  // EXIF data
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a constant
+   --> lgi-core/src/container_format.rs:229:5
+    |
+229 |     pub const TEXT: &[u8; 4] = b"tEXt";  // Text comments
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a function
+ --> lgi-core/src/compression_utils.rs:3:1
+  |
+3 | pub fn delta_encode_positions(positions: &[(f32, f32)]) -> Vec<(f32, f32)> {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a function
+  --> lgi-core/src/compression_utils.rs:17:1
+   |
+17 | pub fn delta_decode_positions(deltas: &[(f32, f32)]) -> Vec<(f32, f32)> {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a function
+ --> lgi-core/src/error_metrics.rs:5:1
+  |
+5 | pub fn compute_psnr(rendered: &ImageBuffer<f32>, target: &ImageBuffer<f32>) -> f32 {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a function
+  --> lgi-core/src/error_metrics.rs:14:1
+   |
+14 | / pub fn compute_region_psnr(
+15 | |     rendered: &ImageBuffer<f32>,
+16 | |     target: &ImageBuffer<f32>,
+17 | |     x_start: u32,
+...  |
+20 | |     region_height: u32,
+21 | | ) -> f32 {
+   | |________^
+
+warning: missing documentation for a function
+  --> lgi-core/src/error_metrics.rs:38:1
+   |
+38 | pub fn compute_mae(rendered: &ImageBuffer<f32>, target: &ImageBuffer<f32>) -> f32 {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+ --> lgi-core/src/spatial_index.rs:5:1
+  |
+5 | pub struct SpatialIndex {
+  | ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+  --> lgi-core/src/spatial_index.rs:11:5
+   |
+11 |     pub fn new(gaussians: &[Gaussian2D<f32, Euler<f32>>], grid_size: usize) -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-core/src/spatial_index.rs:24:5
+   |
+24 |     pub fn query_region(&self, x: f32, y: f32, radius: f32) -> Vec<usize> {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+ --> lgi-core/src/vector_quantization.rs:3:1
+  |
+3 | pub struct VectorQuantizer {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+ --> lgi-core/src/vector_quantization.rs:4:5
+  |
+4 |     pub codebook_size: usize,
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-core/src/vector_quantization.rs:14:5
+   |
+14 |     pub fn build_codebook(&self, values: &[f32], dimensions: usize) -> Vec<Vec<f32>> {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-core/src/vector_quantization.rs:32:5
+   |
+32 |     pub fn quantize(&self, value: &[f32], codebook: &[Vec<f32>]) -> usize {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+ --> lgi-core/src/predictive_coding.rs:3:1
+  |
+3 | pub struct PredictiveCoder;
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+ --> lgi-core/src/predictive_coding.rs:6:5
+  |
+6 |     pub fn predict_scale(neighbors: &[(f32, f32)]) -> (f32, f32) {
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+  --> lgi-core/src/predictive_coding.rs:17:5
+   |
+17 |     pub fn encode_residual(actual: (f32, f32), predicted: (f32, f32)) -> (f32, f32) {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+  --> lgi-core/src/predictive_coding.rs:21:5
+   |
+21 |     pub fn decode_residual(predicted: (f32, f32), residual: (f32, f32)) -> (f32, f32) {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+ --> lgi-core/src/multi_resolution.rs:5:1
+  |
+5 | pub struct MultiResolutionPyramid {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+  --> lgi-core/src/multi_resolution.rs:10:5
+   |
+10 |     pub fn build(image: &ImageBuffer<f32>, num_levels: usize) -> Self {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+  --> lgi-core/src/multi_resolution.rs:22:5
+   |
+22 |     pub fn get_level(&self, level: usize) -> Option<&ImageBuffer<f32>> {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a function
+ --> lgi-core/src/energy_based_selection.rs:5:1
+  |
+5 | pub fn compute_energy(gaussian: &Gaussian2D<f32, Euler<f32>>) -> f32 {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a function
+  --> lgi-core/src/energy_based_selection.rs:11:1
+   |
+11 | / pub fn select_by_energy(
+12 | |     gaussians: &[Gaussian2D<f32, Euler<f32>>],
+13 | |     target_count: usize,
+14 | | ) -> Vec<usize> {
+   | |_______________^
+
+warning: missing documentation for a function
+  --> lgi-core/src/energy_based_selection.rs:23:1
+   |
+23 | pub fn compute_cumulative_energy(gaussians: &[Gaussian2D<f32, Euler<f32>>]) -> Vec<f32> {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-core/src/position_probability_map.rs:50:5
+   |
+50 |     pub height: u32,
+   |     ^^^^^^^^^^^^^^^
+
+   Compiling lgi-gpu v0.1.0 (/home/greg/gaussian-image-projects/lgi-project/packages/lgi-rs/lgi-gpu)
+warning: unused imports: `BackendInfo` and `GpuCapabilities`
+ --> lgi-gpu/src/backend.rs:3:31
+  |
+3 | use crate::{GpuError, Result, BackendInfo, GpuCapabilities};
+  |                               ^^^^^^^^^^^  ^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `GpuError`
+ --> lgi-gpu/src/buffer.rs:3:13
+  |
+3 | use crate::{GpuError, Result};
+  |             ^^^^^^^^
+
+warning: unused import: `GpuError`
+ --> lgi-gpu/src/pipeline.rs:3:13
+  |
+3 | use crate::{GpuError, Result};
+  |             ^^^^^^^^
+
+warning: unused variable: `gpu`
+  --> lgi-gpu/src/manager.rs:75:37
+   |
+75 |         renderer_lock.as_ref().map(|gpu| {
+   |                                     ^^^ help: if this is intentional, prefix it with an underscore: `_gpu`
+   |
+   = note: `#[warn(unused_variables)]` on by default
+
+warning: missing documentation for a struct field
+  --> lgi-gpu/src/buffer.rs:13:5
+   |
+13 |     pub position: [f32; 2],    // μx, μy
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+   |
+note: the lint level is defined here
+  --> lgi-gpu/src/lib.rs:13:9
+   |
+13 | #![warn(missing_docs)]
+   |         ^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-gpu/src/buffer.rs:14:5
+   |
+14 |     pub scale: [f32; 2],       // σx, σy
+   |     ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-gpu/src/buffer.rs:15:5
+   |
+15 |     pub rotation: f32,         // θ
+   |     ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-gpu/src/buffer.rs:16:5
+   |
+16 |     pub _padding1: f32,        // Alignment padding
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-gpu/src/buffer.rs:17:5
+   |
+17 |     pub _padding2: [f32; 2],   // CRITICAL: vec3 in WGSL has 16-byte alignment!
+   |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-gpu/src/buffer.rs:18:5
+   |
+18 |     pub color: [f32; 3],       // R, G, B (offset 32, aligned to 16)
+   |     ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-gpu/src/buffer.rs:19:5
+   |
+19 |     pub opacity: f32,          // α
+   |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-gpu/src/buffer.rs:47:5
+   |
+47 |     pub width: u32,
+   |     ^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-gpu/src/buffer.rs:48:5
+   |
+48 |     pub height: u32,
+   |     ^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-gpu/src/buffer.rs:49:5
+   |
+49 |     pub gaussian_count: u32,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-gpu/src/buffer.rs:50:5
+   |
+50 |     pub render_mode: u32,      // 0=AlphaComposite, 1=AccumulatedSum
+   |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-gpu/src/buffer.rs:51:5
+   |
+51 |     pub cutoff_threshold: f32,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-gpu/src/buffer.rs:52:5
+   |
+52 |     pub n_sigma: f32,
+   |     ^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-gpu/src/buffer.rs:53:5
+   |
+53 |     pub _padding: [u32; 2],    // Alignment to 32 bytes
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+ --> lgi-gpu/src/pipeline.rs:8:5
+  |
+8 |     pub pipeline: wgpu::ComputePipeline,
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+ --> lgi-gpu/src/pipeline.rs:9:5
+  |
+9 |     pub bind_group_layout: wgpu::BindGroupLayout,
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+  --> lgi-gpu/src/gradient.rs:15:1
+   |
+15 | pub struct GpuGradient {
+   | ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-gpu/src/gradient.rs:16:5
+   |
+16 |     pub d_position: [f32; 2],
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-gpu/src/gradient.rs:17:5
+   |
+17 |     pub d_scale_x: f32,
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-gpu/src/gradient.rs:18:5
+   |
+18 |     pub d_scale_y: f32,
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-gpu/src/gradient.rs:19:5
+   |
+19 |     pub d_rotation: f32,
+   |     ^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-gpu/src/gradient.rs:20:5
+   |
+20 |     pub d_color: [f32; 4],
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-gpu/src/gradient.rs:21:5
+   |
+21 |     pub d_opacity: f32,
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct field
+  --> lgi-gpu/src/gradient.rs:22:5
+   |
+22 |     pub _padding: f32,
+   |     ^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a struct
+  --> lgi-gpu/src/gradient.rs:34:1
+   |
+34 | pub struct GpuGradientComputer {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+  --> lgi-gpu/src/gradient.rs:40:5
+   |
+40 |     pub fn new(device: &Device) -> Result<Self> {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for a method
+   --> lgi-gpu/src/gradient.rs:132:5
+    |
+132 | /     pub fn compute_gradients(
+133 | |         &self,
+134 | |         device: &Device,
+135 | |         queue: &Queue,
+...   |
+138 | |         target: &ImageBuffer<f32>,
+139 | |     ) -> Result<Vec<GpuGradient>> {
+    | |_________________________________^
+
+   Compiling lgi-encoder-v2 v0.1.0 (/home/greg/gaussian-image-projects/lgi-project/packages/lgi-rs/lgi-encoder-v2)
+warning: unused import: `log_cholesky::LogCholesky`
+  --> lgi-encoder-v2/src/lib.rs:14:16
+   |
+14 | use lgi_math::{log_cholesky::LogCholesky, gaussian::Gaussian2D, parameterization::Euler, vec::Vector2, color::Color4};
+   |                ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `guided_filter::GuidedFilter`
+  --> lgi-encoder-v2/src/commercial_encoder.rs:19:5
+   |
+19 |     guided_filter::GuidedFilter,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `gaussian::Gaussian2D` and `parameterization::Euler`
+  --> lgi-encoder-v2/src/commercial_encoder.rs:21:16
+   |
+21 | use lgi_math::{gaussian::Gaussian2D, parameterization::Euler};
+   |                ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `color::Color4`
+  --> lgi-encoder-v2/src/adaptive_densification.rs:11:77
+   |
+11 | use lgi_math::{gaussian::Gaussian2D, parameterization::Euler, vec::Vector2, color::Color4};
+   |                                                                             ^^^^^^^^^^^^^
+
+warning: unused import: `laplacian`
+  --> lgi-encoder-v2/src/gdgs_init.rs:14:51
+   |
+14 | use lgi_core::{ImageBuffer, StructureTensorField, laplacian};
+   |                                                   ^^^^^^^^^
+
+warning: unused import: `RateDistortionOptimizer`
+   --> lgi-encoder-v2/src/lib.rs:976:41
+    |
+976 |         use lgi_core::rate_distortion::{RateDistortionOptimizer, ProfileRate};
+    |                                         ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `delta_decode_positions`
+ --> lgi-encoder-v2/src/file_reader.rs:9:35
+  |
+9 | use lgi_core::compression_utils::{delta_decode_positions};
+  |                                   ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused variable: `gpu`
+  --> lgi-encoder-v2/src/renderer_gpu.rs:64:32
+   |
+64 |         self.gpu.as_ref().map(|gpu| {
+   |                                ^^^ help: if this is intentional, prefix it with an underscore: `_gpu`
+   |
+   = note: `#[warn(unused_variables)]` on by default
+
+warning: `lgi-gpu` (lib) generated 31 warnings (run `cargo fix --lib -p lgi-gpu` to apply 3 suggestions)
+warning: unused variable: `gamma`
+  --> lgi-encoder-v2/src/encoder_v3_adaptive.rs:57:48
+   |
+57 |     fn initialize_conditional(&self, n: usize, gamma: f32) -> Vec<Gaussian2D<f32, Euler<f32>>> {
+   |                                                ^^^^^ help: if this is intentional, prefix it with an underscore: `_gamma`
+
+warning: unused variable: `iteration`
+   --> lgi-encoder-v2/src/debug_logger.rs:242:5
+    |
+242 |     iteration: usize,
+    |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_iteration`
+
+warning: unused variable: `psnr`
+   --> lgi-encoder-v2/src/debug_logger.rs:243:5
+    |
+243 |     psnr: f32,
+    |     ^^^^ help: if this is intentional, prefix it with an underscore: `_psnr`
+
+warning: unused variable: `loss`
+   --> lgi-encoder-v2/src/debug_logger.rs:244:5
+    |
+244 |     loss: f32,
+    |     ^^^^ help: if this is intentional, prefix it with an underscore: `_loss`
+
+warning: unused variable: `image_width`
+   --> lgi-encoder-v2/src/kmeans_init.rs:233:5
+    |
+233 |     image_width: u32,
+    |     ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_image_width`
+
+warning: unused variable: `image_height`
+   --> lgi-encoder-v2/src/kmeans_init.rs:234:5
+    |
+234 |     image_height: u32,
+    |     ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_image_height`
+
+warning: field `error` is never read
+   --> lgi-encoder-v2/src/error_driven.rs:197:5
+    |
+194 | struct Hotspot {
+    |        ------- field in this struct
+...
+197 |     error: f32,
+    |     ^^^^^
+    |
+    = note: `#[warn(dead_code)]` on by default
+
+warning: fields `texture_map`, `saliency_map`, `distance_map`, and `skeleton` are never read
+   --> lgi-encoder-v2/src/preprocessing_loader.rs:108:5
+    |
+ 97 | pub struct PreprocessingData {
+    |            ----------------- fields in this struct
+...
+108 |     texture_map: Option<Array2<f32>>,
+    |     ^^^^^^^^^^^
+109 |     saliency_map: Option<Array2<f32>>,
+    |     ^^^^^^^^^^^^
+110 |     distance_map: Option<Array2<f32>>,
+    |     ^^^^^^^^^^^^
+111 |     skeleton: Option<Array2<f32>>,
+    |     ^^^^^^^^
+
+warning: `lgi-core` (lib) generated 249 warnings (run `cargo fix --lib -p lgi-core` to apply 21 suggestions)
+warning: `lgi-encoder-v2` (lib) generated 16 warnings (run `cargo fix --lib -p lgi-encoder-v2` to apply 7 suggestions)
+    Finished `release` profile [optimized] target(s) in 40.14s
+     Running `target/release/examples/fast_benchmark`
+═══════════════════════════════════════════════════════════════
+         LGI v2 FAST BENCHMARK - Session 7 Validation         
+═══════════════════════════════════════════════════════════════
+
+
+▼ TEST IMAGE: Sharp Edge (128×128)
+─────────────────────────────────────────────────────────────
+
+[1/6] BASELINE (Simple Grid, No Optimization)
+  N = 64 | PSNR = 11.74 dB | Time = 2.328661ms
+
+[2/6] GUIDED FILTER + BETTER COLORS
+  N = 64 | PSNR = 11.74 dB (-0.00 dB) | Time = 46.811298ms
+
+[3/6] ERROR-DRIVEN ENCODING (Short Run)
+  Iteration 0: loss = 0.480610
+  Iteration 10: loss = 0.190416
+  Iteration 20: loss = 0.145394
+  Iteration 30: loss = 0.127371
+  Iteration 40: loss = 0.114409
+  Iteration 50: loss = 0.106735
+  Iteration 60: loss = 0.104225
+  Iteration 70: loss = 0.103988
+  Iteration 80: loss = 0.110469
+  Early stop at iteration 86 (no improvement for 20 iters)
+  Iteration 0: loss = 0.105919
+  Iteration 10: loss = 0.101203
+  Iteration 20: loss = 0.110872
+  Early stop at iteration 27 (no improvement for 20 iters)
+  N = 50 | PSNR = 14.67 dB (+2.93 dB) | Time = 599.459802ms
+
+[4/6] ADAM OPTIMIZER (RECOMMENDED)
+  Iteration 10: loss = 0.167767
+  Iteration 20: loss = 0.184177
+  Iteration 30: loss = 0.179731
+  Iteration 40: loss = 0.179818
+  Iteration 50: loss = 0.179105
+  Iteration 60: loss = 0.178891
+  Iteration 70: loss = 0.176815
+  Iteration 80: loss = 0.174665
+  Iteration 90: loss = 0.174401
+  Iteration 100: loss = 0.174456
+  Iteration 10: loss = 0.416667
+  Iteration 20: loss = 0.416667
+  Iteration 30: loss = 0.416667
+  Iteration 40: loss = 0.416667
+  Iteration 50: loss = 0.416667
+  Iteration 60: loss = 0.416667
+  Iteration 70: loss = 0.416667
+  Iteration 80: loss = 0.416667
+  Iteration 90: loss = 0.416667
+  Iteration 100: loss = 0.416667
+  N = 50 | PSNR = 3.80 dB (-7.94 dB) | Time = 1.297388089s (0.5× faster)
+
+[5/6] GPU ACCELERATION (FASTEST)
+GPU Capabilities:
+  Backend: Vulkan
+  Adapter: llvmpipe (LLVM 19.1.7, 128 bits)
+  Device Type: Cpu
+  Feature Level: Advanced
+  Max Workgroup: (1024, 1024, 1024)
+  Max Buffer: 2047 MB
+  Max Texture 2D: 16384×16384
+  Advanced Features:
+    Timestamp Query: true
+    Shader F16: false
+    Subgroup Ops: false
+    Push Constants: true
+  Iteration 0: loss = 0.480610
+  Iteration 10: loss = 0.190416
+  Iteration 20: loss = 0.145394
+  Iteration 30: loss = 0.127371
+  Iteration 40: loss = 0.114409
+  Iteration 50: loss = 0.106735
+  Iteration 60: loss = 0.104225
+  Iteration 70: loss = 0.103988
+  Iteration 80: loss = 0.110468
+  Early stop at iteration 86 (no improvement for 20 iters)
+  Iteration 0: loss = 0.103805
+  Iteration 10: loss = 0.105717
+  Iteration 20: loss = 0.120367
+  N = 50 | PSNR = 11.99 dB (+0.25 dB) | Time = 1.394816714s (0.4× faster)
+
+[6/6] RATE-DISTORTION: Target PSNR = 30 dB
+  Iteration 10: loss = 0.082932
+  Iteration 20: loss = 0.127407
+  Iteration 30: loss = 0.158223
+  Iteration 40: loss = 0.169600
+  Iteration 50: loss = 0.170864
+  Iteration 60: loss = 0.171316
+  Iteration 70: loss = 0.171197
+  Iteration 80: loss = 0.171468
+  Iteration 90: loss = 0.171463
+  Iteration 100: loss = 0.171511
+  Iteration 10: loss = 0.416667
+  Iteration 20: loss = 0.416667
+  Iteration 30: loss = 0.416667
+  Iteration 40: loss = 0.416667
+  Iteration 50: loss = 0.416667
+  Iteration 60: loss = 0.416667
+  Iteration 70: loss = 0.416667
+  Iteration 80: loss = 0.416667
+  Iteration 90: loss = 0.416667
+  Iteration 100: loss = 0.416667
+  N = 100 | PSNR = 3.80 dB (target 30.0, error -26.20 dB) | Time = 2.724935346s
+
+╔═══════════════════════════════════════════════════════════════╗
+║ SUMMARY: Sharp Edge (128×128)                                
+╠═══════════════════════════════════════════════════════════════╣
+║ Method                │    N │  PSNR (dB) │   Δ dB │  Time   ║
+╠═══════════════════════════════════════════════════════════════╣
+║ Baseline              │   64 │      11.74 │  +0.00 │ 2.32866 ║
+║ Guided Init           │   64 │      11.74 │  -0.00 │ 46.8112 ║
+║ Error-Driven          │   50 │      14.67 │  +2.93 │ 599.459 ║
+║ Adam                  │   50 │       3.80 │  -7.94 │ 1.29738 ║
+║ GPU                   │   50 │      11.99 │  +0.25 │ 1.39481 ║
+║ R-D Target            │  100 │       3.80 │  -7.94 │ 2.72493 ║
+╚═══════════════════════════════════════════════════════════════╝
+
+✅ BEST QUALITY: Error-Driven (14.67 dB, +2.93 dB gain)
+⚡ FASTEST: Error-Driven (599.459802ms)
+
+▼ TEST IMAGE: Complex Pattern (128×128)
+─────────────────────────────────────────────────────────────
+
+[1/6] BASELINE (Simple Grid, No Optimization)
+  N = 64 | PSNR = 15.21 dB | Time = 106.42µs
+
+[2/6] GUIDED FILTER + BETTER COLORS
+  N = 64 | PSNR = 13.17 dB (-2.05 dB) | Time = 44.778915ms
+
+[3/6] ERROR-DRIVEN ENCODING (Short Run)
+  Iteration 0: loss = 0.869379
+  Iteration 10: loss = 0.397800
+  Iteration 20: loss = 0.376983
+  Iteration 30: loss = 0.361607
+  Iteration 40: loss = 0.353774
+  Iteration 50: loss = 0.353245
+  Iteration 60: loss = 0.354728
+  Early stop at iteration 65 (no improvement for 20 iters)
+  Iteration 0: loss = 0.910379
+  Iteration 10: loss = 0.352230
+  Iteration 20: loss = 0.351163
+  Iteration 30: loss = 0.354532
+  Early stop at iteration 37 (no improvement for 20 iters)
+  N = 50 | PSNR = 4.98 dB (-10.24 dB) | Time = 495.709418ms
+
+[4/6] ADAM OPTIMIZER (RECOMMENDED)
+  Iteration 10: loss = 0.132683
+  Iteration 20: loss = 0.136614
+  Iteration 30: loss = 0.147857
+  Iteration 40: loss = 0.167520
+  Iteration 50: loss = 0.192714
+  Iteration 60: loss = 0.208704
+  Iteration 70: loss = 0.226375
+  Iteration 80: loss = 0.238290
+  Iteration 90: loss = 0.247702
+  Iteration 100: loss = 0.257755
+  Iteration 10: loss = 0.375001
+  Iteration 20: loss = 0.375001
+  Iteration 30: loss = 0.375001
+  Iteration 40: loss = 0.375001
+  Iteration 50: loss = 0.375001
+  Iteration 60: loss = 0.375001
+  Iteration 70: loss = 0.375001
+  Iteration 80: loss = 0.375001
+  Iteration 90: loss = 0.375001
+  Iteration 100: loss = 0.375001
+  N = 50 | PSNR = 4.26 dB (-10.96 dB) | Time = 1.437898815s (0.3× faster)
+
+[5/6] GPU ACCELERATION (FASTEST)
+GPU Capabilities:
+  Backend: Vulkan
+  Adapter: llvmpipe (LLVM 19.1.7, 128 bits)
+  Device Type: Cpu
+  Feature Level: Advanced
+  Max Workgroup: (1024, 1024, 1024)
+  Max Buffer: 2047 MB
+  Max Texture 2D: 16384×16384
+  Advanced Features:
+    Timestamp Query: true
+    Shader F16: false
+    Subgroup Ops: false
+    Push Constants: true
+  Iteration 0: loss = 0.869379
+  Iteration 10: loss = 0.397800
+  Iteration 20: loss = 0.376983
+  Iteration 30: loss = 0.361607
+  Iteration 40: loss = 0.353774
+  Iteration 50: loss = 0.353245
+  Iteration 60: loss = 0.354728
+  Early stop at iteration 65 (no improvement for 20 iters)
+  Iteration 0: loss = 0.954430
+  Iteration 10: loss = 0.358042
+  Iteration 20: loss = 0.356728
+  Iteration 30: loss = 0.359745
+  Early stop at iteration 37 (no improvement for 20 iters)
+  N = 50 | PSNR = 4.26 dB (-10.96 dB) | Time = 1.352913838s (0.4× faster)
+
+[6/6] RATE-DISTORTION: Target PSNR = 30 dB
+  Iteration 10: loss = 0.093967
+  Iteration 20: loss = 0.106612
+  Iteration 30: loss = 0.097262
+  Iteration 40: loss = 0.095781
+  Iteration 50: loss = 0.093258
+  Iteration 60: loss = 0.089735
+  Iteration 70: loss = 0.089960
+  Iteration 80: loss = 0.088834
+  Iteration 90: loss = 0.088987
+  Iteration 100: loss = 0.089654
+  Iteration 10: loss = 0.375001
+  Iteration 20: loss = 0.375001
+  Iteration 30: loss = 0.375001
+  Iteration 40: loss = 0.375001
+  Iteration 50: loss = 0.375001
+  Iteration 60: loss = 0.375001
+  Iteration 70: loss = 0.375001
+  Iteration 80: loss = 0.375001
+  Iteration 90: loss = 0.375001
+  Iteration 100: loss = 0.375001
+  N = 100 | PSNR = 4.26 dB (target 30.0, error -25.74 dB) | Time = 3.393864058s
+
+╔═══════════════════════════════════════════════════════════════╗
+║ SUMMARY: Complex Pattern (128×128)                                
+╠═══════════════════════════════════════════════════════════════╣
+║ Method                │    N │  PSNR (dB) │   Δ dB │  Time   ║
+╠═══════════════════════════════════════════════════════════════╣
+║ Baseline              │   64 │      15.21 │  +0.00 │ 106.42µ ║
+║ Guided Init           │   64 │      13.17 │  -2.05 │ 44.7789 ║
+║ Error-Driven          │   50 │       4.98 │ -10.24 │ 495.709 ║
+║ Adam                  │   50 │       4.26 │ -10.96 │ 1.43789 ║
+║ GPU                   │   50 │       4.26 │ -10.96 │ 1.35291 ║
+║ R-D Target            │  100 │       4.26 │ -10.96 │ 3.39386 ║
+╚═══════════════════════════════════════════════════════════════╝
+
+✅ BEST QUALITY: Baseline (15.21 dB, +0.00 dB gain)
+⚡ FASTEST: Error-Driven (495.709418ms)
+
+═══════════════════════════════════════════════════════════════
+                    BENCHMARK COMPLETE                         
+═══════════════════════════════════════════════════════════════
+
