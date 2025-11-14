@@ -45,12 +45,9 @@ benchmarks/results/
 *.csv
 *.json
 
-# Large files / datasets (use Git LFS if needed)
+# Large files / datasets (now using Git LFS)
 *.lgi.large
-test-data/**/*.jpg
-test-data/**/*.png
-# Exception: Keep smaller test files
-!test-data/test_images_new_synthetic/*.png
+# test-data images now tracked via Git LFS (see .gitattributes)
 
 # Logs
 *.log
