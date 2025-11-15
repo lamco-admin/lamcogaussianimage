@@ -45,12 +45,13 @@ impl ContentAnalyzer {
         if entropy > 6.0 && edge_density > 0.3 {
             // High entropy + many edges = high-frequency or text
             ContentType::HighFrequency
-        } else if avg_gradient < 0.01 && avg_coherence < 0.1 {
-            // Very low gradients and coherence = smooth content
-            ContentType::Smooth
-        } else if edge_density > 0.15 {
-            // High edge density = sharp boundaries
+        } else if entropy < 2.0 && avg_coherence < 0.5 {
+            // Low entropy (few distinct values) + low coherence = sharp edges
             ContentType::Sharp
+        } else if avg_coherence > 0.8 || avg_gradient < 0.01 {
+            // High coherence (aligned gradients everywhere) = smooth gradients
+            // OR very low gradient magnitude = smooth/flat
+            ContentType::Smooth
         } else if entropy > 5.0 {
             // High entropy, moderate everything = photo
             ContentType::Photo

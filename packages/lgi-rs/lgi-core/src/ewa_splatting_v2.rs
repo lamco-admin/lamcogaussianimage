@@ -54,12 +54,13 @@ impl EWARendererV2 {
         zoom: f32,
     ) {
         // Transform Gaussian to screen space
-        let mu_x = gaussian.position.x * width as f32 * zoom;
-        let mu_y = gaussian.position.y * height as f32 * zoom;
+        // Note: width/height already account for zoom in render_multiscale
+        let mu_x = gaussian.position.x * width as f32;
+        let mu_y = gaussian.position.y * height as f32;
 
         // Scale to screen space
-        let sx = gaussian.shape.scale_x * width as f32 * zoom;
-        let sy = gaussian.shape.scale_y * height as f32 * zoom;
+        let sx = gaussian.shape.scale_x * width as f32;
+        let sy = gaussian.shape.scale_y * height as f32;
         let theta = gaussian.shape.rotation;
 
         // Build covariance matrix in screen space

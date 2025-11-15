@@ -1,0 +1,368 @@
+================================================================================
+GAUSSIAN IMAGE CODEC - QUICK REFERENCE GUIDE
+================================================================================
+
+CODEC VARIANTS AT A GLANCE
+================================================================================
+
+QUANTIZATION PROFILES:
+  LGIQ-B    13 bytes    28-32 dB    Log-scale, packed bits
+  LGIQ-S    14 bytes    30-34 dB    Enhanced precision, HDR
+  LGIQ-H    20 bytes    35-40 dB    Float16, high-quality
+  LGIQ-X    36 bytes    Lossless    Float32, bit-exact
+
+COMPRESSION PRESETS:
+  balanced()    LGIQ-B + VQ(256) + zstd(9)    4-10× compression
+  small()       LGIQ-B + VQ(128) + zstd(19)   15× compression
+  high_quality()   LGIQ-H + no VQ + zstd(9)   2-5× compression
+  lossless()    LGIQ-X + no VQ + zstd(19)    1.5-3.5× compression
+  uncompressed()   LGIQ-X + no compression    1× (uncompressed)
+
+INITIALIZATION STRATEGIES:
+  Random         - Seed-reproducible uniform random
+  Grid           - Uniform grid spacing (default V1)
+  Gradient       - Edge-aware, structure tensor aligned (default V2)
+  Importance     - Variance-weighted sampling
+  SLIC           - Superpixel-based
+  GDGS           - Laplacian peaks, 10-100× fewer Gaussians
+  Gradient Peaks - 80% peaks + 20% grid (Strategy H)
+  K-means        - Color/position/gradient clustering (Strategy D)
+
+LOSS FUNCTIONS:
+  L2Loss         - Mean squared error (baseline)
+  SSIMLoss       - Window-based structural similarity
+  MS-SSIM        - Multi-scale perceptual loss
+  EdgeWeightedLoss - Structure tensor weighted
+
+OPTIMIZERS:
+  V1 - Gradient descent, per-parameter LR
+  V2 - GPU acceleration (454× faster), MS-SSIM, edge-weighting
+  V3 - Perceptual loss focus
+  Adaptive - Gaussian culling, lifecycle management
+
+================================================================================
+FILE FORMAT STRUCTURE
+================================================================================
+
+LGI File = Magic + Chunks + IEND
+
+MAGIC: "LGI\0" (4 bytes)
+
+CHUNK STRUCTURE:
+  [4] Length (big-endian u32)
+  [4] Type (ASCII fourCC)
+  [N] Data (N bytes)
+  [4] CRC32 (big-endian u32)
+
+CHUNK TYPES:
+  HEAD - File header (required)
+  GAUS - Gaussian data (required)
+  PRGS - Progressive ordering (optional)
+  META - JSON metadata (optional)
+  INDE - Spatial index (optional)
+  LODC - LOD bands (optional)
+  TILE - Tile boundaries (optional)
+  iCCP - ICC profile (optional)
+  eXIf - EXIF data (optional)
+  tEXt - Text comments (optional)
+  IEND - End marker (required)
+
+FEATURE FLAGS:
+  HAS_TEXTURES      - Per-Gaussian textures
+  HAS_LOD           - LOD bands
+  HAS_SPATIAL_INDEX - Spatial indexing
+  HAS_PROGRESSIVE   - Progressive loading
+  HAS_TILING        - Tiled layout
+  HAS_METADATA      - Metadata chunks
+  IS_HDR            - HDR color
+  HAS_BLUE_NOISE    - Residuals
+
+================================================================================
+ENCODER PIPELINES
+================================================================================
+
+V1 ENCODER (Primary):
+  1. Initialize (5 strategies)
+  2. Optimize (gradient descent)
+  3. Output
+
+V2 ENCODER (Research):
+  1. Compute structure tensor + geodesic EDT
+  2. Initialize (8 strategies)
+  3. Optimize (V2 optimizer)
+  4. Output
+
+COMMERCIAL ENCODER (Full-Featured):
+  1. Initialize
+  2. Optimize base
+  3. Analyze quality
+  4. Compute triggers (7 metrics)
+  5. Add textures
+  6. Render textured
+  7. Add blue-noise residuals
+
+V3 ENCODER (Content-Adaptive):
+  1. Detect content type
+  2. Apply adaptive gamma
+  3. Initialize with conditional anisotropy
+  4. Optimize
+  5. Apply triggers
+  6. Classify into LOD bands
+
+================================================================================
+COMPRESSION PIPELINE
+================================================================================
+
+Input: Raw Gaussians
+  ↓
+[Quantization] LGIQ-B/S/H/X
+  ↓
+[Vector Quantization] K-means codebook (optional)
+  ↓
+[Delta Coding] Position residuals (optional)
+  ↓
+[Predictive Coding] Scale residuals (optional)
+  ↓
+[zstd Compression] Streaming compression
+  ↓
+[Chunk Encoding] LGI format
+  ↓
+Output: Compressed .lgi file
+
+================================================================================
+KEY IMPLEMENTATIONS - WHERE TO FIND WHAT
+================================================================================
+
+QUANTIZATION:
+  - 4 profiles (LGIQ-B/S/H/X)
+  - Exact bit layouts
+  → /packages/lgi-rs/lgi-format/src/quantization.rs
+
+COMPRESSION CONFIG:
+  - 5 presets (balanced, small, high_quality, lossless, uncompressed)
+  - Statistics tracking
+  → /packages/lgi-rs/lgi-format/src/compression.rs
+
+VECTOR QUANTIZATION:
+  - K-means++ training
+  - Lloyd's algorithm
+  - 9D Gaussian vectors
+  → /packages/lgi-rs/lgi-encoder/src/vector_quantization.rs
+
+ENCODER V1:
+  - Main encoder struct
+  - Progress callbacks
+  - Config presets
+  → /packages/lgi-rs/lgi-encoder/src/lib.rs (104 lines)
+  → /packages/lgi-rs/lgi-encoder/src/config.rs (133 lines)
+
+ENCODER V2:
+  - 8 initialization strategies
+  - Auto Gaussian counting
+  - Hybrid counting (entropy + gradient)
+  → /packages/lgi-rs/lgi-encoder-v2/src/lib.rs (300+ lines)
+
+COMMERCIAL ENCODER:
+  - Full 7-stage pipeline
+  - Textures, residuals, triggers
+  → /packages/lgi-rs/lgi-encoder-v2/src/commercial_encoder.rs
+
+OPTIMIZERS:
+  - V1: Basic gradient descent
+  - V2: GPU, MS-SSIM, edge-weighted
+  - V3: Perceptual
+  → /packages/lgi-rs/lgi-encoder/src/optimizer.rs
+  → /packages/lgi-rs/lgi-encoder-v2/src/optimizer_v2.rs
+  → /packages/lgi-rs/lgi-encoder-v2/src/optimizer_v3_perceptual.rs
+
+LOSS FUNCTIONS:
+  - L2, SSIM, MS-SSIM, Edge-Weighted
+  → /packages/lgi-rs/lgi-encoder/src/loss.rs
+  → /packages/lgi-rs/lgi-core/src/ms_ssim_loss.rs
+  → /packages/lgi-rs/lgi-core/src/edge_weighted_loss.rs
+
+FILE I/O:
+  - Chunk reading/writing
+  - Format validation
+  - Progressive support
+  → /packages/lgi-rs/lgi-format/src/reader.rs
+  → /packages/lgi-rs/lgi-encoder-v2/src/file_reader.rs
+  → /packages/lgi-rs/lgi-encoder-v2/src/file_writer.rs
+
+RENDERING:
+  - CPU (weighted average)
+  - GPU (454× faster)
+  - Textured
+  → /packages/lgi-rs/lgi-encoder-v2/src/renderer_v2.rs
+  → /packages/lgi-rs/lgi-encoder-v2/src/renderer_gpu.rs
+  → /packages/lgi-rs/lgi-encoder-v2/src/renderer_v3_textured.rs
+
+ADVANCED FEATURES:
+  - Structure tensor (edge detection)
+  - Geodesic EDT (anti-bleeding)
+  - Guided filter (color refinement)
+  - Textured Gaussians (+2-4 dB)
+  - Blue-noise residuals (+1-2 dB)
+  - Analytical triggers (7 metrics)
+  - LOD system (progressive)
+  - Spatial indexing (BVH)
+  → /packages/lgi-rs/lgi-core/src/
+
+================================================================================
+COMPRESSION PERFORMANCE
+================================================================================
+
+QUALITY (PSNR):
+  LGIQ-B:        28-32 dB
+  LGIQ-S:        30-34 dB
+  LGIQ-H:        35-40 dB
+  LGIQ-X:        Lossless
+  + Textures:    +2-4 dB
+  + Residuals:   +1-2 dB
+
+COMPRESSION RATIO:
+  Balanced:      4-10×
+  Small:         up to 15×
+  High Quality:  2-5×
+  Lossless:      1.5-3.5×
+
+SPEED (Decoding):
+  CPU:           60-500 FPS (resolution-dependent)
+  GPU:           1000+ FPS
+
+BYTES PER GAUSSIAN:
+  LGIQ-B (raw):     13 bytes
+  LGIQ-S (raw):     14 bytes
+  LGIQ-H (raw):     20 bytes
+  LGIQ-X (raw):     36 bytes
+  + VQ (8-bit idx):  +1 byte (codebook separate)
+  + zstd:            ~0.7× factor on above
+
+================================================================================
+ADVANCED FEATURE PERFORMANCE
+================================================================================
+
+TEXTURED GAUSSIANS:
+  - 8×8 or 16×16 texture maps per Gaussian
+  - +2-4 dB PSNR improvement
+  - Adaptive: only add where variance > threshold
+
+BLUE-NOISE RESIDUALS:
+  - High-frequency detail recovery
+  - +1-2 dB PSNR improvement
+  - Spectral blue-noise pattern
+
+ANALYTICAL TRIGGERS (7 metrics):
+  1. SED - Spectral Energy Drop
+  2. ERR - Entropy-Residual Ratio
+  3. LCC - Laplacian Consistency
+  4. DCT - DCT coefficients
+  5. Frequency response
+  6. Texture detection
+  7. Edge metrics
+
+INITIALIZATION GAINS:
+  - GDGS: 10-100× fewer Gaussians for same quality
+  - Gradient peaks: Better edge preservation
+  - K-means: Content-aware clustering
+  - SLIC: Boundary-respecting regions
+
+STRUCTURE TENSOR:
+  - Edge orientation detection
+  - Coherence measurement
+  - Anisotropic Gaussian shaping
+
+GEODESIC EDT:
+  - Anti-bleeding (respects edges)
+  - Used for scale clamping
+  - Prevents halos
+
+================================================================================
+CODEC SELECTION GUIDE
+================================================================================
+
+For BALANCED QUALITY (28-32 dB):
+  → Use LGIQ-B profile
+  → Enable VQ(256) + zstd(9)
+  → Expect 4-10× compression
+  → 1000+ FPS decoding
+
+For STREAMING (Progressive):
+  → Enable progressive flag
+  → Use importance ordering
+  → ROI-based transmission
+  → Stream first few layers incrementally
+
+For MAXIMUM QUALITY (35-40 dB):
+  → Use LGIQ-H profile
+  → Disable VQ
+  → Enable textures and residuals
+  → Expect 2-5× compression
+
+For LOSSLESS (Bit-exact):
+  → Use LGIQ-X profile
+  → Disable VQ
+  → Use zstd(19)
+  → Expect 1.5-3.5× compression
+
+For SMALL FILES (Aggressive):
+  → Use small() preset
+  → LGIQ-B + VQ(128) + zstd(19)
+  → Expect up to 15× compression
+
+================================================================================
+PARAMETER REFERENCE
+================================================================================
+
+ENCODER CONFIG DEFAULTS:
+  max_iterations:        2000
+  lr_position:           0.01
+  lr_scale:              0.005
+  lr_rotation:           0.005
+  lr_color:              0.01
+  lr_opacity:            0.01
+  loss_l2_weight:        0.8
+  loss_ssim_weight:      0.2
+  early_stopping_patience: 100
+  lr_decay:              0.1 (per 500 iter)
+
+OPTIMIZER V2 DEFAULTS:
+  learning_rate_position: 0.10
+  learning_rate_scale:    0.10
+  learning_rate_color:    0.6
+  learning_rate_rotation: 0.02
+  max_iterations:         100
+
+VQ DEFAULTS:
+  codebook_size:         256 (8-bit indices)
+  convergence:           1e-6
+  initialization:        K-means++
+
+QUANTIZATION PARAMETERS:
+  LGIQ-B scale σ_min:    0.001
+  LGIQ-B log₂ range:     [-8, 8]
+  LGIQ-S log₂ range:     [-8, 8]
+  LGIQ-H dynamic range:  10^-8 to 65504
+  Position clamp:        [0, 1]
+  Rotation clamp:        [-π, π]
+
+RENDERER PARAMETERS:
+  Gaussian cutoff:       3.5 sigma
+  Distance threshold:    12.25 (3.5²)
+  Pixel accumulation:    weighted average
+  Normalization:        divide by weight sum
+
+================================================================================
+DOCUMENT LOCATIONS
+================================================================================
+
+FULL CATALOG (Comprehensive):
+  /home/user/lamcogaussianimage/CODEC_CATALOG.md (1127 lines)
+
+IMPLEMENTATION SUMMARY:
+  /home/user/lamcogaussianimage/CODEC_IMPLEMENTATION_SUMMARY.txt
+
+THIS QUICK REFERENCE:
+  /home/user/lamcogaussianimage/QUICK_REFERENCE.txt
+
+================================================================================

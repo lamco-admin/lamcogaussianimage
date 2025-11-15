@@ -1,0 +1,308 @@
+================================================================================
+COMPREHENSIVE PYTHON PREPROCESSING TOOLS CATALOG
+Gaussian Image Codec Repository
+================================================================================
+
+EXECUTIVE SUMMARY
+=================
+
+This repository contains 28 Python files organized into 6 main categories:
+1. Preprocessing Tools (3 scripts)
+2. Image Processing Utilities (5 files)
+3. Training & Optimization (2 files)
+4. Gaussian Splatting Kernels (5 files)
+5. Performance & Quality Metrics (4 files)
+6. Legacy & Testing Code (2 files)
+
+QUICK FILE REFERENCE
+====================
+
+PRIMARY PREPROCESSING TOOLS (lgi-rs/tools/)
+-------------------------------------------
+1. preprocess_image.py (540 lines)
+   - Full image analysis pipeline
+   - Outputs: 8 .npy maps + metadata.json
+   - Features: Entropy, gradient, texture, saliency, segmentation, skeleton
+   
+2. preprocess_image_v2.py (296 lines)
+   - Production-ready version
+   - Outputs: Named .npy files + JSON metadata
+   - Features: File handling modes, SHA256 checksums, parameter detection
+   
+3. slic_preprocess.py (133 lines)
+   - SLIC-based Gaussian initialization
+   - Outputs: JSON with Gaussian parameters
+   - Features: Position, scale, rotation, color extraction per superpixel
+
+IMAGE UTILITIES (lgi-legacy/image-gs/utils/)
+----------------------------------------------
+4. image_utils.py (202 lines)
+   - Image I/O, format conversion, visualization
+   - Functions: load_images, save_image, visualize_gaussians, compute_gradients, PSNR
+   
+5. quantization_utils.py (18 lines)
+   - Straight-through quantization (STE)
+   - 4-32 bit precision control
+   
+6. saliency_utils.py (35 lines)
+   - EMLNet-based saliency detection
+   - Dual-stream ResNet50 (ImageNet + Places)
+   
+7. misc_utils.py (49 lines)
+   - Config management, random seeds, checkpoints
+   
+8. flip.py (715 lines)
+   - FLIP loss (perceptual error metric)
+   - HDR-FLIP and LDR-FLIP implementations
+   - Color space transforms, tone mapping, feature detection
+
+TRAINING & MODELS
+------------------
+9. main.py (57 lines)
+   - Entry point for training/rendering
+   - Configuration string building
+   
+10. model.py (~400 lines, partial read)
+    - GaussianSplatting2D core implementation
+    - Initialization, logging, optimization
+
+GAUSSIAN SPLATTING (gsplat package)
+-------------------------------------
+11. project_gaussians_2d_scale_rot.py (114 lines)
+    - Project 2D Gaussians with scale/rotation
+    - CUDA-backed forward/backward
+    
+12. rasterize_sum.py (227 lines)
+    - Tile-based rasterization
+    - 16x16 block processing, top-k normalization
+    
+13. rasterize_no_tiles.py (194 lines)
+    - Simple rasterization without tiling
+    - Two variants: standard and scale/rotation
+    
+14. utils.py (163 lines)
+    - Binning, sorting, covariance utilities
+    - tile mapping, cumulative intersects
+    
+15. __init__.py (gsplat, 137 lines)
+    - Package API exports
+    - Backward compatibility wrappers
+
+SSIM & QUALITY (fused-ssim)
+-----------------------------
+16. fused_ssim/__init__.py (43 lines)
+    - Fast SSIM via CUDA kernels
+    - Custom autograd function
+    
+17. test.py (158 lines)
+    - Correctness tests, benchmarks
+    - Compares vs pytorch_msssim
+    
+18. genplot.py (101 lines)
+    - Performance benchmarking script
+    - Generates timing plots
+    
+19. train_image.py (30 lines)
+    - SSIM optimization example
+
+LEGACY & TESTING
+-----------------
+20. gaussian_2d_cpu.py (~80 lines, partial)
+    - CPU-only simplified Image-GS
+    - Pure PyTorch, no CUDA
+    
+21. test_gaussian.py (197 lines)
+    - Test suite for CPU implementation
+    - Reconstruction and progressive tests
+
+CONFIGURATION
+--------------
+22-28. Various __init__.py and setup.py files
+
+
+KEY ALGORITHMS
+==============
+
+PREPROCESSING PIPELINE:
+1. Entropy: Histogram-based Shannon entropy in 16x16 tiles
+2. Gradient: Sobel operator (CPU or GPU via CUDA)
+3. Texture: Haralick features (contrast, energy) via Mahotas
+4. Saliency: Spectral residual or EMLNet
+5. Segmentation: SLIC with 500 superpixels (compactness=10)
+6. Distance: Euclidean distance transform per segment
+7. Skeleton: Morphological skeletonization
+
+PLACEMENT MAP WEIGHTS:
+- Entropy: 0.3 (complexity)
+- Gradient: 0.25 (edges)
+- Texture: 0.2 (textured regions)
+- Saliency: 0.15 (visual importance)
+- Distance: 0.10 (region centers)
+
+SLIC GAUSSIAN INITIALIZATION:
+1. Superpixel centroid → Gaussian position
+2. Mean color → Gaussian color
+3. Covariance eigenvalues → Gaussian scales
+4. Eigenvector angle → Gaussian rotation
+
+RENDERING:
+1. Project Gaussians to 2D (position, scale, rotation)
+2. Bin Gaussians into 16x16 tiles
+3. Depth sort per tile
+4. Rasterize with alpha blending
+5. Composite colors using Gaussian weights
+
+
+OUTPUT FORMATS
+==============
+
+PREPROCESS_IMAGE_V2 OUTPUT:
+{image_stem}.json:
+  - source: image metadata, SHA256
+  - preprocessing: version, timestamp, libraries, parameters
+  - analysis_maps: {map_name: filename}
+  - statistics: entropy, gradient, texture %, segments
+
+{image_stem}_{type}.npy:
+  - placement, entropy, gradient, texture
+  - saliency, distance, skeleton, segments
+  - All stored as numpy float32 arrays [H, W]
+
+SLIC_PREPROCESS OUTPUT:
+slic_init.json:
+  - source_image, dimensions, segment count
+  - gaussians[]: {position, scale, rotation, color, segment_id, pixel_count}
+  - Positions/scales normalized to [0, 1]
+
+
+TYPICAL USAGE WORKFLOW
+======================
+
+Step 1: Preprocess image
+$ python preprocess_image_v2.py image.png --n-segments 500 --use-gpu
+
+Step 2 (Optional): Generate Gaussian initialization
+$ python slic_preprocess.py image.png 500 slic_init.json
+
+Step 3: Train model
+$ python main.py --input-path image.png --num-gaussians 5000
+
+Step 4 (Optional): Render
+$ python main.py --input-path image.png --eval --ckpt-file model.pt
+
+
+DEPENDENCIES
+============
+
+Core:
+- torch, torchvision, numpy, scipy
+- scikit-image (SLIC, morphology)
+- opencv-contrib-python (Sobel, distance transform)
+- mahotas (Haralick features)
+- PIL, matplotlib, PyYAML
+
+Extensions:
+- gsplat.cuda (C++/CUDA bindings)
+- fused_ssim_cuda (custom CUDA kernels)
+- lpips, pytorch_msssim
+
+Optional:
+- CUDA toolkit, cuDNN
+
+
+FILE PATHS
+==========
+
+PREPROCESSING:
+/home/user/lamcogaussianimage/packages/lgi-rs/tools/preprocess_image.py
+/home/user/lamcogaussianimage/packages/lgi-rs/tools/preprocess_image_v2.py
+/home/user/lamcogaussianimage/packages/lgi-rs/tools/slic_preprocess.py
+
+UTILITIES:
+/home/user/lamcogaussianimage/packages/lgi-legacy/image-gs/utils/image_utils.py
+/home/user/lamcogaussianimage/packages/lgi-legacy/image-gs/utils/quantization_utils.py
+/home/user/lamcogaussianimage/packages/lgi-legacy/image-gs/utils/saliency_utils.py
+/home/user/lamcogaussianimage/packages/lgi-legacy/image-gs/utils/misc_utils.py
+/home/user/lamcogaussianimage/packages/lgi-legacy/image-gs/utils/flip.py
+
+TRAINING:
+/home/user/lamcogaussianimage/packages/lgi-legacy/image-gs/main.py
+/home/user/lamcogaussianimage/packages/lgi-legacy/image-gs/model.py
+
+SPLATTING:
+/home/user/lamcogaussianimage/packages/lgi-legacy/image-gs/gsplat/gsplat/project_gaussians_2d_scale_rot.py
+/home/user/lamcogaussianimage/packages/lgi-legacy/image-gs/gsplat/gsplat/rasterize_sum.py
+/home/user/lamcogaussianimage/packages/lgi-legacy/image-gs/gsplat/gsplat/rasterize_no_tiles.py
+/home/user/lamcogaussianimage/packages/lgi-legacy/image-gs/gsplat/gsplat/utils.py
+/home/user/lamcogaussianimage/packages/lgi-legacy/image-gs/gsplat/gsplat/__init__.py
+
+SSIM:
+/home/user/lamcogaussianimage/packages/lgi-tools/fused-ssim/fused_ssim/__init__.py
+/home/user/lamcogaussianimage/packages/lgi-tools/fused-ssim/tests/test.py
+/home/user/lamcogaussianimage/packages/lgi-tools/fused-ssim/tests/genplot.py
+/home/user/lamcogaussianimage/packages/lgi-tools/fused-ssim/tests/train_image.py
+
+CPU TESTING:
+/home/user/lamcogaussianimage/packages/lgi-legacy/image-gs-cpu/gaussian_2d_cpu.py
+/home/user/lamcogaussianimage/packages/lgi-legacy/image-gs-cpu/test_gaussian.py
+
+
+KEY FUNCTIONS BY PURPOSE
+=========================
+
+IMAGE LOADING:
+- image_utils.load_images(path) → (images, channels, filenames)
+
+PREPROCESSING:
+- preprocess_image_v2.ImagePreprocessor.preprocess(image_path, params)
+
+GAUSSIAN INIT:
+- slic_preprocess.generate_slic_gaussians(image_path, n_segments)
+
+VISUALIZATION:
+- image_utils.visualize_gaussians(filepath, xy, scale, rot, feat)
+- image_utils.visualize_added_gaussians(filepath, images, old_xy, new_xy)
+
+METRICS:
+- image_utils.get_psnr(img1, img2)
+- fused_ssim.fused_ssim(img1, img2)
+- flip.LDRFLIPLoss().forward(test, reference)
+
+RENDERING:
+- project_gaussians_2d_scale_rot() → (xys, radii, conics, num_tiles)
+- rasterize_gaussians_sum() → rendered_image
+- bin_and_sort_gaussians() → sorted tensors
+
+
+INTEGRATION WITH RUST CODEC
+============================
+
+Role of Python Tools:
+1. Image preprocessing & analysis
+2. Placement map generation (guides Gaussian positioning)
+3. SLIC initialization (provides starting parameters)
+4. Output formats (.npy, .json) compatible with Rust
+
+Data Flow:
+1. Python preprocessing → .npy maps + metadata
+2. Rust encoder reads preprocessing
+3. Rust places Gaussians using guidance from placement maps
+4. Rust renders and optimizes
+5. Optional: Python evaluates quality (SSIM, PSNR, FLIP)
+
+
+DOCUMENTATION REFERENCE
+=======================
+
+For complete details, see: PYTHON_TOOLS_CATALOG.md (999 lines)
+- Detailed function documentation
+- Parameter specifications
+- Algorithm descriptions
+- Color space transforms
+- Loss function formulas
+
+Created: 2025-11-15
+Total Python Files Cataloged: 28
+Total Lines of Documentation: 999+
+
+================================================================================

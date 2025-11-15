@@ -1,0 +1,381 @@
+================================================================================
+PYTHON ARCHITECTURE MAP
+Gaussian Image Codec Repository
+================================================================================
+
+COMPLETE FILE TREE & RELATIONSHIPS
+===================================
+
+/home/user/lamcogaussianimage/packages/
+|
+├── lgi-rs/
+│   └── tools/  [MAIN PREPROCESSING]
+│       ├── preprocess_image.py
+│       │   ├── Inputs: Single image (PNG/JPG/etc)
+│       │   ├── Outputs: 8 .npy files + metadata.json
+│       │   ├── Main function: ImagePreprocessor.preprocess()
+│       │   ├── Algorithms: Entropy, Gradient, Texture, Saliency, SLIC, Distance, Skeleton
+│       │   └── Dependencies: cv2, mahotas, scikit-image, numpy, scipy
+│       │
+│       ├── preprocess_image_v2.py
+│       │   ├── Enhanced version of above
+│       │   ├── Features: File modes, checksums, parameter detection
+│       │   ├── Outputs: Named files + JSON metadata
+│       │   └── API: Same functions with streamlined names
+│       │
+│       └── slic_preprocess.py
+│           ├── Purpose: Generate Gaussian initialization
+│           ├── Input: Image + n_segments parameter
+│           ├── Output: JSON with Gaussian parameters
+│           ├── Key data: position, scale, rotation, color per superpixel
+│           └── Main function: generate_slic_gaussians()
+│
+├── lgi-legacy/
+│   ├── image-gs/  [TRAINING & SPLATTING SYSTEM]
+│   │   ├── utils/  [UTILITY MODULES]
+│   │   │   ├── image_utils.py
+│   │   │   │   ├── Functions: load_images, save_image, PSNR, visualize_gaussians
+│   │   │   │   ├── Metrics: get_psnr, compute_image_gradients
+│   │   │   │   ├── Visualization: visualize_gaussians, visualize_added_gaussians
+│   │   │   │   └── Dependencies: PIL, matplotlib, torch, scipy, numpy
+│   │   │   │
+│   │   │   ├── quantization_utils.py
+│   │   │   │   ├── Function: ste_quantize (straight-through estimator)
+│   │   │   │   ├── Purpose: 4-32 bit precision control
+│   │   │   │   └── Reference: Bengio et al. 2013
+│   │   │   │
+│   │   │   ├── saliency_utils.py
+│   │   │   │   ├── Function: get_smap (EMLNet-based)
+│   │   │   │   ├── Architecture: Dual ResNet50 + decoder
+│   │   │   │   └── Models: ImageNet + Places streams
+│   │   │   │
+│   │   │   ├── misc_utils.py
+│   │   │   │   ├── Functions: clean_dir, get_latest_ckpt, set_random_seed
+│   │   │   │   ├── Config: load_cfg, save_cfg (YAML)
+│   │   │   │   └── Dependencies: yaml, argparse
+│   │   │   │
+│   │   │   └── flip.py
+│   │   │       ├── Classes: HDRFLIPLoss, LDRFLIPLoss
+│   │   │       ├── NVIDIA implementation (BSD license)
+│   │   │       ├── Color pipelines: sRGB→YCxCz→Lab, Hunt adjustment
+│   │   │       ├── Feature detection: Edges, points
+│   │   │       ├── Tone mapping: Reinhard, Hable, ACES
+│   │   │       ├── References: High Performance Graphics 2020, Eurographics 2021
+│   │   │       └── Dependencies: torch, numpy
+│   │   │
+│   │   ├── main.py  [ENTRY POINT]
+│   │   │   ├── Functions: get_gaussian_cfg, get_log_dir, main
+│   │   │   ├── Loads: YAML config (cfgs/default.yaml)
+│   │   │   ├── Creates: GaussianSplatting2D model
+│   │   │   ├── Calls: model.optimize() or model.render()
+│   │   │   └── Output: Log directory with results
+│   │   │
+│   │   ├── model.py  [CORE TRAINING]
+│   │   │   ├── Class: GaussianSplatting2D(nn.Module)
+│   │   │   ├── Init methods: _init_logging, _init_target, _init_bit_precision, etc.
+│   │   │   ├── Methods: optimize(), render()
+│   │   │   ├── Losses: L1, SSIM (fused_ssim), LPIPS, FLIP
+│   │   │   ├── Imports: fused_ssim, lpips, pytorch_msssim, gsplat
+│   │   │   └── Output: Checkpoints, rendered images, metrics
+│   │   │
+│   │   └── gsplat/  [GAUSSIAN SPLATTING LIBRARY]
+│   │       └── gsplat/
+│   │           ├── project_gaussians_2d_scale_rot.py
+│   │           │   ├── Function: project_gaussians_2d_scale_rot()
+│   │           │   ├── Input: 2D positions, scales, rotations
+│   │           │   ├── Output: xys, radii, conics, num_tiles_hit
+│   │           │   ├── Autograd: _ProjectGaussians2dScaleRot
+│   │           │   └── Backend: CUDA kernel via gsplat.cuda._C
+│   │           │
+│   │           ├── rasterize_sum.py
+│   │           │   ├── Function: rasterize_gaussians_sum()
+│   │           │   ├── Features: Tiling (16x16), depth sorting, top-k normalization
+│   │           │   ├── Autograd: _RasterizeGaussiansSum
+│   │           │   ├── Forward: Bin, sort, rasterize
+│   │           │   └── Backward: Compute gradients
+│   │           │
+│   │           ├── rasterize_no_tiles.py
+│   │           │   ├── Functions: rasterize_gaussians_no_tiles, rasterize_gaussians_simple
+│   │           │   ├── Autograd classes: _RasterizeGaussiansNoTiles, _RasterizeGaussiansSimple
+│   │           │   └── Use: Testing, comparison
+│   │           │
+│   │           ├── utils.py
+│   │           │   ├── Functions: map_gaussian_to_intersects, get_tile_bin_edges
+│   │           │   ├── Functions: bin_and_sort_gaussians, compute_cov2d_bounds
+│   │           │   ├── Functions: compute_cumulative_intersects
+│   │           │   └── All: GPU-efficient tensor operations
+│   │           │
+│   │           └── __init__.py
+│   │               ├── Exports: All main functions
+│   │               ├── Deprecated: Backward compatibility wrappers
+│   │               └── __all__: Complete API
+│   │
+│   └── image-gs-cpu/  [LEGACY CPU IMPLEMENTATION]
+│       ├── gaussian_2d_cpu.py
+│       │   ├── Classes: Gaussian2D, ImageGS(nn.Module)
+│       │   ├── Methods: compute_gaussian_2d, render
+│       │   ├── Features: Pure PyTorch, no CUDA
+│       │   └── Use: Education, testing
+│       │
+│       └── test_gaussian.py
+│           ├── Tests: test_basic_reconstruction, test_progressive_optimization
+│           ├── Functions: create_test_image
+│           ├── Output: Comparison images, loss curves
+│           └── Dependencies: torch, numpy, PIL, matplotlib
+│
+└── lgi-tools/
+    └── fused-ssim/  [SSIM COMPUTATION]
+        ├── fused_ssim/
+        │   └── __init__.py
+        │       ├── Class: FusedSSIMMap(torch.autograd.Function)
+        │       ├── Function: fused_ssim(img1, img2, padding, train)
+        │       ├── Modes: "same", "valid" padding
+        │       ├── Backend: Custom CUDA kernels
+        │       │   ├── Forward: fusedssim()
+        │       │   └── Backward: fusedssim_backward()
+        │       └── Constants: C1=0.01^2, C2=0.03^2
+        │
+        └── tests/
+            ├── test.py
+            │   ├── Tests: Forward correctness, backward correctness
+            │   ├── Comparisons: pytorch_msssim, reference SSIM
+            │   ├── Benchmarks: Forward, backward, inference time
+            │   └── Modes: Same vs valid padding
+            │
+            ├── genplot.py
+            │   ├── Benchmarks: Image sizes 50-1500 pixels
+            │   ├── Batch: 5 samples, 5 channels
+            │   ├── Output: training_time.png, inference_time.png
+            │   └── Comparison: pytorch_mssim vs fused_ssim
+            │
+            └── train_image.py
+                ├── Demo: SSIM-based optimization
+                ├── Input: albert.jpg
+                ├── Optimizer: Adam
+                ├── Target: SSIM > 0.9999
+                └── Output: predicted.jpg
+
+
+DEPENDENCY GRAPH
+================
+
+Image Input
+    ↓
+[preprocess_image_v2.py]
+    ├── cv2 (Sobel, distance)
+    ├── mahotas (Haralick)
+    ├── scikit-image (SLIC)
+    ├── scipy.ndimage
+    └── numpy
+    ↓
+.npy maps + metadata.json
+    ↓
+[OPTIONAL: slic_preprocess.py]
+    ├── scikit-image (slic)
+    └── numpy
+    ↓
+slic_init.json (Gaussian init)
+    ↓
+[main.py / model.py]
+    ├── [gsplat package]
+    │   ├── project_gaussians_2d_scale_rot
+    │   ├── rasterize_gaussians_sum
+    │   └── gsplat.cuda (C++ CUDA extensions)
+    ├── [utils]
+    │   ├── image_utils (PIL, matplotlib)
+    │   ├── quantization_utils
+    │   ├── flip (NVIDIA FLIP loss)
+    │   └── misc_utils
+    ├── [losses]
+    │   ├── fused_ssim (custom CUDA)
+    │   ├── lpips
+    │   └── pytorch_msssim
+    └── torch (training loop)
+    ↓
+Checkpoints + Rendered Images + Metrics
+
+
+DATA FLOW DURING TRAINING
+==========================
+
+1. INITIALIZATION:
+   Input Image → [model._init_target] → Normalized tensor
+   SLIC Init JSON → [model._init_gaussians] → Parameter tensors
+
+2. FORWARD PASS:
+   Gaussian params → [project_gaussians_2d_scale_rot] 
+   → (xys, radii, conics, num_tiles)
+   → [rasterize_gaussians_sum] → Rendered image
+
+3. LOSS COMPUTATION:
+   Rendered, Target → [L1 loss, SSIM loss, LPIPS loss, FLIP loss]
+   → Combined loss value
+
+4. BACKWARD PASS:
+   Loss ↓ [gradient computation via autograd]
+   → Gradients for all Gaussian parameters
+   → [ste_quantize] optional bit precision limiting
+
+5. OPTIMIZATION:
+   Gradients → [Adam/SGD optimizer] → Update parameters
+   → Save checkpoint → Visualization
+
+
+PREPROCESSING PIPELINE DETAIL
+=============================
+
+Input: image.png
+    ↓
+[ImagePreprocessor.preprocess()]
+    ├─→ [_compute_entropy_map]
+    │   ├── Convert to grayscale
+    │   ├── Process 16x16 tiles
+    │   ├── Histogram-based Shannon entropy
+    │   └── Output: entropy_map [H, W]
+    │
+    ├─→ [_compute_gradient_map]
+    │   ├── Sobel operator (CPU or GPU)
+    │   ├── Magnitude calculation
+    │   └── Output: gradient_map [H, W]
+    │
+    ├─→ [_compute_texture_map]
+    │   ├── 32x32 tiles with 50% overlap
+    │   ├── Haralick feature extraction
+    │   ├── Contrast / Energy ratio
+    │   └── Output: texture_map [H, W]
+    │
+    ├─→ [_compute_slic_segments]
+    │   ├── SLIC with 500 segments (default)
+    │   ├── Compactness=10, sigma=1
+    │   └── Output: segments [H, W]
+    │
+    ├─→ [_compute_saliency_map]
+    │   ├── Spectral residual method
+    │   └── Output: saliency_map [H, W]
+    │
+    ├─→ [_compute_distance_transform]
+    │   ├── Per-segment Euclidean distance
+    │   └── Output: distance_map [H, W]
+    │
+    ├─→ [_compute_skeleton]
+    │   ├── Morphological skeletonization
+    │   └── Output: skeleton [H, W]
+    │
+    └─→ [_generate_placement_map]
+        ├── Weighted combination:
+        │   0.3×entropy + 0.25×gradient + 0.2×texture 
+        │   + 0.15×saliency + 0.10×distance
+        ├── Normalize to probability distribution
+        └── Output: placement_map [H, W]
+
+All outputs saved as .npy files + metadata.json
+
+
+SLIC GAUSSIAN INITIALIZATION DETAIL
+====================================
+
+Input: image.png, n_segments=500
+    ↓
+[generate_slic_gaussians()]
+    ├─→ Load image (handle RGBA → RGB)
+    ├─→ Run SLIC segmentation (compactness=10)
+    │
+    └─→ For each segment:
+        ├── Compute centroid → position [x_norm, y_norm]
+        ├── Extract mean color → color [r, g, b]
+        ├── Compute covariance matrix
+        │   └── Eigendecomposition
+        ├── Get eigenvalues → scales [sx_norm, sy_norm]
+        ├── Get eigenvector angle → rotation (radians)
+        └── Count pixels → pixel_count
+
+Output: slic_init.json with gaussians[]
+    Each entry:
+    {
+        "position": [x, y],
+        "scale": [sx, sy],
+        "rotation": angle,
+        "color": [r, g, b],
+        "segment_id": id,
+        "pixel_count": count
+    }
+
+
+QUALITY METRICS AVAILABLE
+==========================
+
+1. PSNR (image_utils.get_psnr)
+   - Peak Signal-to-Noise Ratio
+   - Range: 0 to inf (higher=better)
+   - Input: torch tensors [0, 1]
+
+2. SSIM (fused_ssim.fused_ssim)
+   - Structural Similarity Index
+   - Custom CUDA implementation
+   - Range: 0 to 1 (higher=better)
+   - Modes: "same" or "valid" padding
+
+3. LPIPS (from lpips package)
+   - Learned Perceptual Image Patch Similarity
+   - Neural network-based perceptual metric
+   - Range: 0 to infinity (lower=better)
+
+4. MS-SSIM (from pytorch_msssim)
+   - Multi-scale SSIM
+   - Hierarchical assessment
+   - Range: 0 to 1 (higher=better)
+
+5. FLIP (flip.LDRFLIPLoss, flip.HDRFLIPLoss)
+   - Frequency-based error
+   - Perceptual error evaluation
+   - Human vision modeling
+   - HDR and LDR variants
+
+
+KEY CONFIGURATION PARAMETERS
+=============================
+
+Preprocessing:
+  n_segments: 100-1000 (default: 500)
+  entropy_tile_size: Tile size (default: 16)
+  use_gpu: Boolean CUDA flag
+  mode: "overwrite"|"skip"|"update"|"prompt"
+
+SLIC:
+  compactness: 10 (spatial vs color balance)
+  sigma: 1 (Gaussian smoothing)
+
+FLIP:
+  qc: 0.7 (color exponent)
+  qf: 0.5 (feature exponent)
+  pc: 0.4 (redistribution multiplier)
+  pt: 0.95 (target threshold)
+
+Training:
+  num_gaussians: 1000-10000
+  pos_bits, scale_bits, rot_bits, feat_bits: 4-32
+  learning_rate, schedule
+  l1_loss_ratio, ssim_loss_ratio, etc.
+
+
+TOTAL METRICS
+=============
+
+Python Files Analyzed: 28
+Total Lines of Code: ~2000-2500
+Total Lines of Documentation: 1500+
+
+Categories:
+- Preprocessing tools: 3 files
+- Image utilities: 5 files
+- Training/Model: 2 files
+- Gaussian splatting: 5 files
+- SSIM/Quality: 4 files
+- Legacy/Testing: 2 files
+- Config/Init: 7 files
+
+Key Algorithms: 15+
+Loss Functions: 5+
+Utility Functions: 50+
+
+================================================================================

@@ -26,14 +26,17 @@ impl LODBand {
         let det = gaussian.shape.scale_x * gaussian.shape.scale_y;
 
         // Adjusted thresholds based on actual scale distribution
-        // Typical σ in normalized coords: 0.005-0.02
-        // det(Σ) = σ_x × σ_y ranges from 0.000025 to 0.0004
-        if det > 0.0004 {
-            LODBand::Coarse  // σ > 0.02 (large Gaussians)
-        } else if det > 0.0001 {
-            LODBand::Medium  // σ ~ 0.01-0.02 (typical)
+        // Typical σ in normalized coords: 0.05-0.3
+        // det(Σ) = σ_x × σ_y:
+        //   Coarse: > 0.04 (σ > 0.2)
+        //   Medium: 0.01-0.04 (σ ~ 0.1-0.2)
+        //   Fine: < 0.01 (σ < 0.1)
+        if det > 0.04 {
+            LODBand::Coarse  // Large Gaussians (σ > 0.2)
+        } else if det > 0.01 {
+            LODBand::Medium  // Medium Gaussians (σ ~ 0.1-0.2)
         } else {
-            LODBand::Fine    // σ < 0.01 (small details)
+            LODBand::Fine    // Small details (σ < 0.1)
         }
     }
 
@@ -221,26 +224,26 @@ mod tests {
         // Create Gaussians with different scales
         let mut gaussians = Vec::new();
 
-        // Coarse (det > 0.0004, e.g., σx=0.025, σy=0.025 → det=0.000625)
+        // Coarse (det > 0.04, e.g., σx=0.21, σy=0.21 → det=0.0441)
         gaussians.push(Gaussian2D::new(
             Vector2::new(0.5, 0.5),
-            Euler::new(0.025, 0.025, 0.0),
+            Euler::new(0.21, 0.21, 0.0),
             Color4::new(1.0, 0.0, 0.0, 1.0),
             1.0,
         ));
 
-        // Medium (0.0001 < det ≤ 0.0004, e.g., σx=0.015, σy=0.015 → det=0.000225)
+        // Medium (0.01 < det ≤ 0.04, e.g., σx=0.15, σy=0.15 → det=0.0225)
         gaussians.push(Gaussian2D::new(
             Vector2::new(0.3, 0.3),
-            Euler::new(0.015, 0.015, 0.0),
+            Euler::new(0.15, 0.15, 0.0),
             Color4::new(0.0, 1.0, 0.0, 1.0),
             1.0,
         ));
 
-        // Fine (det ≤ 0.0001, e.g., σx=0.008, σy=0.008 → det=0.000064)
+        // Fine (det ≤ 0.01, e.g., σx=0.08, σy=0.08 → det=0.0064)
         gaussians.push(Gaussian2D::new(
             Vector2::new(0.7, 0.7),
-            Euler::new(0.008, 0.008, 0.0),
+            Euler::new(0.08, 0.08, 0.0),
             Color4::new(0.0, 0.0, 1.0, 1.0),
             1.0,
         ));
