@@ -1,0 +1,491 @@
+================================================================================
+GAUSSIAN IMAGE CODEC REPOSITORY - IMPLEMENTATION SUMMARY
+================================================================================
+
+LOCATION: /home/user/lamcogaussianimage
+
+================================================================================
+1. CODEC VARIANTS FOUND
+================================================================================
+
+QUANTIZATION PROFILES (4 variants):
+  LGIQ-B (Balanced)      - 13 bytes/Gaussian, 28-32 dB PSNR
+  LGIQ-S (Standard)      - 14 bytes/Gaussian, 30-34 dB PSNR  
+  LGIQ-H (High Quality)  - 20 bytes/Gaussian, 35-40 dB PSNR
+  LGIQ-X (Lossless)      - 36 bytes/Gaussian, bit-exact
+
+File: /packages/lgi-rs/lgi-format/src/quantization.rs (536 lines)
+
+================================================================================
+2. COMPRESSION STRATEGIES
+================================================================================
+
+Multi-Stage Pipeline:
+  1. Quantization (LGIQ profiles)
+  2. Vector Quantization (k-means, 256 codebook)
+  3. zstd Compression (streaming)
+  4. Optional: Delta coding, Predictive coding
+
+Presets (5 built-in):
+  - Balanced (default): LGIQ-B + VQ(256) + zstd(9)
+  - Small: Maximum compression with LGIQ-B + VQ(128) + zstd(19)
+  - High Quality: LGIQ-H + no VQ + zstd(9)
+  - Lossless: LGIQ-X + no VQ + zstd(19)
+  - Uncompressed: LGIQ-X + no compression
+
+File: /packages/lgi-rs/lgi-format/src/compression.rs (240 lines)
+
+================================================================================
+3. ENCODING SCHEMES
+================================================================================
+
+PARAMETER ENCODINGS (5 variants):
+  - Euler (σx, σy, θ)           - Standard, use rotation
+  - Cholesky (L11, L21, L22)     - PSD-guaranteed
+  - LogRadii (log σx, log σy, θ) - Log-scale parameters
+  - InvCov (inverse covariance)  - Covariance matrix
+  - Raw (uncompressed float32)   - Lossless
+
+File: /packages/lgi-rs/lgi-core/src/container_format.rs (231 lines)
+
+================================================================================
+4. FILE FORMATS & SERIALIZATION
+================================================================================
+
+PRIMARY FORMAT: LGI (Gaussian Image)
+  Magic: "LGI\0" (4 bytes)
+  
+CHUNK TYPES (10 total):
+  HEAD - File header (required)
+  GAUS - Gaussian data (required)
+  PRGS - Progressive ordering (optional)
+  LODC - LOD bands (optional)
+  TILE - Tile boundaries (optional)
+  INDE - Spatial index (optional)
+  META - Metadata/JSON (optional)
+  iCCP - ICC color profile (optional)
+  eXIf - EXIF data (optional)
+  tEXt - Text comments (optional)
+  IEND - End marker (required)
+
+Format Spec: /packages/lgi-rs/lgi-format/src/
+  chunk.rs (196 lines) - Chunk I/O with CRC32
+  gaussian_data.rs (318 lines) - Storage variants
+  header.rs (134 lines) - File header structure
+  reader.rs (200 lines) - File reading
+  writer.rs - File writing
+
+Advanced Format: /packages/lgi-rs/lgi-core/src/container_format.rs
+  Pre-configured profiles:
+    - lossless_uncompressed()
+    - lossless_compressed()
+    - lossy_baseline() [LGIQ-B]
+    - lossy_standard() [LGIQ-S + delta + zstd]
+    - lossy_high_fidelity() [LGIQ-H + predictive + zstd]
+
+FEATURE FLAGS (8 total):
+  HAS_TEXTURES - Per-Gaussian textures
+  HAS_LOD - Level-of-detail bands
+  HAS_SPATIAL_INDEX - Spatial indexing
+  HAS_PROGRESSIVE - Progressive loading
+  HAS_TILING - Tiled layout
+  HAS_METADATA - Metadata chunks
+  IS_HDR - HDR color space
+  HAS_BLUE_NOISE - Blue-noise residuals
+
+================================================================================
+5. ENCODER IMPLEMENTATIONS
+================================================================================
+
+ENCODER V1 (Primary)
+  File: /packages/lgi-rs/lgi-encoder/src/lib.rs
+  Main struct: Encoder
+  Methods: encode(), encode_with_progress()
+  Config: 4 presets (fast, balanced, high_quality, ultra)
+  Features: Quantization-aware training, VQ compression
+
+ENCODER V2 (Research-Based)
+  File: /packages/lgi-rs/lgi-encoder-v2/src/lib.rs
+  Main struct: EncoderV2
+  Features:
+    - Log-Cholesky covariance
+    - Geodesic EDT (anti-bleeding)
+    - Structure tensor alignment
+    - MS-SSIM loss
+    - Rate-distortion optimization
+    
+  INITIALIZATION STRATEGIES (8 variants):
+    1. Grid-based (default) - uniform placement
+    2. Auto Gaussian Count - entropy-based
+    3. Hybrid Count - 60% entropy + 40% gradient
+    4. GDGS - gradient domain (Laplacian peaks)
+    5. Gradient Peaks (H) - 80% peaks + 20% background
+    6. K-means (D) - pixel clustering
+    7. SLIC (E) - superpixel-based
+    8. Preprocessing-guided - Python integration
+
+COMMERCIAL ENCODER (Full-Featured)
+  File: /packages/lgi-rs/lgi-encoder-v2/src/commercial_encoder.rs
+  7-stage pipeline:
+    1. Initialize (grid or guided filter)
+    2. Optimize base Gaussians
+    3. Render & analyze quality
+    4. Compute analytical triggers (7 metrics)
+    5. Add textures adaptively
+    6. Render with textures
+    7. Add blue-noise residuals
+  Features: Textures, residuals, triggers, guided filter
+
+ENCODER V3 (Content-Adaptive)
+  File: /packages/lgi-rs/lgi-encoder-v2/src/encoder_v3_adaptive.rs
+  Detects content type and applies:
+    - Smooth (γ=1.2), Sharp (γ=0.4), HighFrequency (γ=0.4), Photo (γ=0.4)
+    - Conditional anisotropy
+    - Analytical triggers + LOD classification
+
+================================================================================
+6. OPTIMIZATION STRATEGIES
+================================================================================
+
+OPTIMIZER V1
+  File: /packages/lgi-rs/lgi-encoder/src/optimizer.rs
+  Method: Gradient descent with per-parameter learning rates
+  Features: Loss weighting (L2 + SSIM), early stopping, decay schedule
+
+OPTIMIZER V2 (Enhanced)
+  File: /packages/lgi-rs/lgi-encoder-v2/src/optimizer_v2.rs
+  Variants:
+    - new_with_gpu() - GPU acceleration (454× faster)
+    - new_with_ms_ssim() - Perceptual loss
+    - new_with_gpu_and_ms_ssim() - Combined
+  Features: Edge-weighted gradients, structure tensor awareness
+
+OPTIMIZER V3 (Perceptual)
+  File: /packages/lgi-rs/lgi-encoder-v2/src/optimizer_v3_perceptual.rs
+  Features: Perceptual loss weighting, edge-aware, multi-resolution
+
+ADAPTIVE OPTIMIZATION
+  File: /packages/lgi-rs/lgi-encoder/src/adaptive.rs
+  Components:
+    - AdaptiveThresholdController - Gaussian culling
+    - LifecycleManager - Health tracking, merge/prune decisions
+
+LOSS FUNCTIONS (4 types):
+  1. L2 Loss (MSE) - baseline
+  2. SSIM Loss - window-based (11×11 default)
+  3. MS-SSIM Loss - multi-scale perceptual
+  4. Edge-Weighted Loss - structure-aware
+
+Files:
+  /packages/lgi-rs/lgi-encoder/src/loss.rs (140 lines)
+  /packages/lgi-rs/lgi-core/src/ms_ssim_loss.rs
+  /packages/lgi-rs/lgi-core/src/edge_weighted_loss.rs
+
+================================================================================
+7. VECTOR QUANTIZATION
+================================================================================
+
+File: /packages/lgi-rs/lgi-encoder/src/vector_quantization.rs (270 lines)
+
+GaussianVector: [μx, μy, σx, σy, θ, r, g, b, α] (9 floats)
+
+VectorQuantizer:
+  - K-means++ initialization
+  - Lloyd's algorithm (iterative)
+  - Convergence threshold: 1e-6
+  - Codebook size: 256 (8-bit indices)
+  - Compression: 5-10× with <1 dB quality loss
+
+From GaussianImage ECCV 2024 paper
+
+================================================================================
+8. RENDERING ENGINES
+================================================================================
+
+RENDERER V2 (CPU Validation)
+  File: /packages/lgi-rs/lgi-encoder-v2/src/renderer_v2.rs (88 lines)
+  Algorithm: Weighted average
+  - Gaussian evaluation with 3.5-sigma cutoff
+  - Mahalanobis distance computation
+  - Per-pixel normalization
+
+RENDERER GPU
+  File: /packages/lgi-rs/lgi-encoder-v2/src/renderer_gpu.rs
+  Acceleration: WGPU/Vulkan
+  Speedup: 454× vs CPU
+
+RENDERER V3 (Textured)
+  File: /packages/lgi-rs/lgi-encoder-v2/src/renderer_v3_textured.rs
+  Features: Per-Gaussian texture mapping, blending
+
+================================================================================
+9. INITIALIZATION STRATEGIES
+================================================================================
+
+File: /packages/lgi-rs/lgi-core/src/initializer.rs
+
+5 CORE STRATEGIES:
+  1. Random - uniform placement with seed support
+  2. Grid - uniform grid spacing
+  3. Gradient - edge-aware (default)
+  4. Importance - variance-weighted sampling
+  5. SLIC - superpixel-based
+
+8 V2-SPECIALIZED STRATEGIES (in lgi-encoder-v2):
+  1. GDGS (gdgs_init.rs) - Laplacian peaks
+  2. Gradient Peaks (gradient_peak_init.rs) - Strategy H
+  3. K-means (kmeans_init.rs) - Strategy D
+  4. SLIC (slic_init.rs) - Strategy E
+  5. Preprocessing (preprocessing_loader.rs) - Python integration
+
+================================================================================
+10. ADVANCED FEATURES
+================================================================================
+
+TEXTURED GAUSSIANS
+  File: /packages/lgi-rs/lgi-core/src/textured_gaussian.rs
+  - Per-Gaussian 8×8 or 16×16 texture maps
+  - Variance-based texture detection
+  - Quality improvement: +2-4 dB
+
+BLUE-NOISE RESIDUALS
+  File: /packages/lgi-rs/lgi-core/src/blue_noise_residual.rs
+  - High-frequency detail recovery
+  - Blue-noise dithering pattern
+  - Quality improvement: +1-2 dB
+
+ANALYTICAL TRIGGERS (7 Quality Metrics)
+  File: /packages/lgi-rs/lgi-core/src/analytical_triggers.rs
+  Metrics:
+    1. SED - Spectral Energy Drop
+    2. ERR - Entropy-Residual Ratio
+    3. LCC - Laplacian Consistency
+    4. DCT - DCT coefficient analysis
+    5. Frequency response - multi-band
+    6. Texture detection - content-based
+    7. Edge metrics - boundary preservation
+
+LOD SYSTEM
+  File: /packages/lgi-rs/lgi-core/src/lod_system.rs
+  - Gaussian classification into bands
+  - Progressive loading support
+
+PROGRESSIVE ENCODING
+  File: /packages/lgi-rs/lgi-core/src/progressive.rs
+  - Importance ordering
+  - Streaming support
+  - ROI-based transmission
+
+SPATIAL INDEXING
+  File: /packages/lgi-rs/lgi-core/src/spatial_index.rs
+  - BVH (bounding volume hierarchy)
+  - Grid-based partitioning
+  - O(log n) lookup
+
+STRUCTURE TENSOR
+  File: /packages/lgi-rs/lgi-core/src/structure_tensor.rs
+  - Edge detection
+  - Eigenvalue/eigenvector analysis
+  - Coherence measurement
+  - Anisotropic Gaussian shaping
+
+GEODESIC EDT
+  File: /packages/lgi-rs/lgi-core/src/geodesic_edt.rs
+  - Boundary-respecting distance transform
+  - Anti-bleeding (no distance across edges)
+  - Scale clamping
+
+GUIDED FILTER
+  File: /packages/lgi-rs/lgi-core/src/guided_filter.rs
+  - Edge-preserving smoothing
+  - Color initialization refinement
+
+================================================================================
+11. COMPRESSION UTILITY FUNCTIONS
+================================================================================
+
+DELTA CODING (positions)
+  File: /packages/lgi-rs/lgi-core/src/compression_utils.rs
+  - Predict from neighboring Gaussians
+  - Encode residuals only
+
+PREDICTIVE CODING (scales)
+  File: /packages/lgi-rs/lgi-core/src/predictive_coding.rs
+  - Scale prediction from neighbors
+  - Delta encoding
+  - Improves zstd compression
+
+RATE-DISTORTION OPTIMIZATION
+  File: /packages/lgi-rs/lgi-core/src/rate_distortion.rs
+  - Optimal Gaussian count selection
+  - Quality target specification
+  - Parameter tuning
+
+================================================================================
+12. COMPREHENSIVE PACKAGE ORGANIZATION
+================================================================================
+
+lgi-format/ (7 modules)
+  - Compression config & presets
+  - Quantization profiles (4)
+  - Chunk I/O with CRC32
+  - Gaussian data storage (3 variants)
+  - File header
+  - Reader/Writer
+
+lgi-encoder/ (12 modules)
+  - Main encoder
+  - Configuration (4 presets)
+  - Loss functions (L2, SSIM)
+  - Optimizers (v1, v2)
+  - Adaptive strategies
+  - Vector quantization (k-means)
+  - Autodiff
+  - Metrics collection
+
+lgi-encoder-v2/ (16 modules)
+  - EncoderV2 (8 init strategies)
+  - Commercial encoder (full pipeline)
+  - EncoderV3 (content-adaptive)
+  - Optimizers (v2, v3, perceptual)
+  - Renderers (CPU, GPU, textured)
+  - File I/O (reader, writer)
+  - Initialization strategies (4 specialized)
+  - Error-driven placement
+  - Preprocessing integration
+  - Debug logger
+
+lgi-core/ (59 modules)
+  - Initialization (5 core strategies)
+  - Structure tensor & edge detection
+  - Geodesic EDT
+  - Container format (advanced)
+  - Rendering engine
+  - Textured Gaussians
+  - Blue-noise residuals
+  - Analytical triggers
+  - LOD system
+  - Progressive encoding
+  - Spatial indexing
+  - Viewport culling
+  - Guided filter
+  - MS-SSIM (perceptual)
+  - Rate-distortion optimization
+  - Tiling
+  - And 43+ more specialized modules
+
+================================================================================
+13. QUALITY TARGETS & PERFORMANCE
+================================================================================
+
+PSNR RANGES:
+  LGIQ-B:      28-32 dB (balanced)
+  LGIQ-S:      30-34 dB (standard)
+  LGIQ-H:      35-40 dB (high quality)
+  LGIQ-X:      Lossless (bit-exact)
+  + Textures:  +2-4 dB
+  + Residuals: +1-2 dB
+
+COMPRESSION RATIOS:
+  Balanced:    4-10×
+  Small:       up to 15×
+  High quality: 2-5×
+  Lossless:    1.5-3.5×
+
+DECODING SPEED:
+  CPU: ~60-500 FPS (resolution-dependent)
+  GPU: 1000+ FPS
+
+================================================================================
+14. COMPRESSION PIPELINE EXAMPLE
+================================================================================
+
+Input Gaussians
+  ↓
+[Quantization Profile: LGIQ-B - 13 bytes/Gaussian]
+  ↓
+[Vector Quantization: 256 codebook - 1 byte indices]
+  ↓
+[Delta Coding: Positions - residual encoding]
+  ↓
+[Predictive Coding: Scales - neighbor prediction]
+  ↓
+[zstd Compression: Level 9 - entropy coding]
+  ↓
+[LGI Chunk Format: HEAD + GAUS + META + IEND]
+  ↓
+Final Compressed File
+
+EXPECTED: 4-10× compression, 28-32 dB PSNR, 1000+ FPS decoding
+
+================================================================================
+15. KEY FILES - COMPLETE REFERENCE
+================================================================================
+
+CORE CODEC:
+  /packages/lgi-rs/lgi-format/src/quantization.rs (536 lines) - LGIQ profiles
+  /packages/lgi-rs/lgi-format/src/compression.rs (240 lines) - Config presets
+  /packages/lgi-rs/lgi-format/src/gaussian_data.rs (318 lines) - Storage
+  /packages/lgi-rs/lgi-core/src/container_format.rs (231 lines) - Format spec
+
+ENCODERS:
+  /packages/lgi-rs/lgi-encoder/src/lib.rs (104 lines) - Encoder V1
+  /packages/lgi-rs/lgi-encoder-v2/src/lib.rs (300+ lines) - Encoder V2
+  /packages/lgi-rs/lgi-encoder-v2/src/commercial_encoder.rs - Full-featured
+  /packages/lgi-rs/lgi-encoder-v2/src/encoder_v3_adaptive.rs - Adaptive
+
+FILE I/O:
+  /packages/lgi-rs/lgi-format/src/reader.rs (200 lines) - Reader V1
+  /packages/lgi-rs/lgi-encoder-v2/src/file_reader.rs (200 lines) - Reader V2
+  /packages/lgi-rs/lgi-encoder-v2/src/file_writer.rs - Writer V2
+
+OPTIMIZATION:
+  /packages/lgi-rs/lgi-encoder/src/optimizer.rs - Optimizer V1
+  /packages/lgi-rs/lgi-encoder-v2/src/optimizer_v2.rs - Optimizer V2
+  /packages/lgi-rs/lgi-encoder/src/loss.rs (140 lines) - Loss functions
+  /packages/lgi-rs/lgi-core/src/ms_ssim_loss.rs - Perceptual loss
+
+VECTOR QUANTIZATION:
+  /packages/lgi-rs/lgi-encoder/src/vector_quantization.rs (270 lines) - K-means
+
+RENDERING:
+  /packages/lgi-rs/lgi-encoder-v2/src/renderer_v2.rs (88 lines) - CPU
+  /packages/lgi-rs/lgi-encoder-v2/src/renderer_v3_textured.rs - Textured
+
+ADVANCED FEATURES:
+  /packages/lgi-rs/lgi-core/src/textured_gaussian.rs - Textures
+  /packages/lgi-rs/lgi-core/src/blue_noise_residual.rs - Residuals
+  /packages/lgi-rs/lgi-core/src/analytical_triggers.rs - 7 metrics
+  /packages/lgi-rs/lgi-core/src/structure_tensor.rs - Edge detection
+  /packages/lgi-rs/lgi-core/src/geodesic_edt.rs - Anti-bleeding
+  /packages/lgi-rs/lgi-core/src/progressive.rs - Progressive encoding
+
+INITIALIZATION:
+  /packages/lgi-rs/lgi-core/src/initializer.rs - 5 core strategies
+  /packages/lgi-rs/lgi-encoder-v2/src/gdgs_init.rs - Gradient domain
+  /packages/lgi-rs/lgi-encoder-v2/src/gradient_peak_init.rs - Strategy H
+  /packages/lgi-rs/lgi-encoder-v2/src/kmeans_init.rs - Strategy D
+  /packages/lgi-rs/lgi-encoder-v2/src/slic_init.rs - Strategy E
+
+================================================================================
+FULL CATALOG DOCUMENT
+================================================================================
+
+See: /home/user/lamcogaussianimage/CODEC_CATALOG.md (1127 lines)
+
+Comprehensive documentation including:
+  - All 4 quantization profiles with exact layouts
+  - All compression presets and configurations
+  - All parameter encoding modes
+  - Complete file format specification
+  - All encoder variants and pipelines
+  - All optimization strategies
+  - All loss functions
+  - All initialization strategies
+  - Vector quantization details
+  - All rendering engines
+  - All advanced features
+  - Complete file mapping
+  - Quality targets and performance metrics
+
+================================================================================
