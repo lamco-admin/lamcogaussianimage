@@ -1,0 +1,6 @@
+sweep,case_id,param_name,param_value,sigma_perp,spacing,alpha,sigma_parallel,mse,psnr,mae,correlation,blur_sigma,contrast
+sweep_2_sigma_parallel,case_06_blur2_contrast_medium,sigma_parallel,3.0,2.0,2.5,0.5,3.0,0.11947029295314106,9.227400713721174,0.24545139660386467,0.0018542586637625687,2.0,0.5
+sweep_2_sigma_parallel,case_06_blur2_contrast_medium,sigma_parallel,4.0,2.0,2.5,0.5,4.0,0.11898403991404533,9.245112893815438,0.24543912244986713,0.0021529250513586265,2.0,0.5
+sweep_2_sigma_parallel,case_06_blur2_contrast_medium,sigma_parallel,5.0,2.0,2.5,0.5,5.0,0.11849778686783316,9.262897607092631,0.2454347376322412,0.0024204701069521235,2.0,0.5
+sweep_2_sigma_parallel,case_06_blur2_contrast_medium,sigma_parallel,7.0,2.0,2.5,0.5,7.0,0.11752528078561632,9.298687025434699,0.24543065342353776,0.0028965265188586223,2.0,0.5
+sweep_2_sigma_parallel,case_06_blur2_contrast_medium,sigma_parallel,10.0,2.0,2.5,0.5,10.0,0.11606652742718779,9.352930089404202,0.24542836502745932,0.003522945169277305,2.0,0.5
