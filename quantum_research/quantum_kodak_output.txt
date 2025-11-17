@@ -1,0 +1,15 @@
+======================================================================
+QUANTUM PRIMITIVE DISCOVERY - Kodak Dataset
+======================================================================
+
+Step 1: Extracting features from Kodak images...
+Traceback (most recent call last):
+  File "/home/greg/gaussian-image-projects/lgi-project/quantum_research/RUN_QUANTUM_KODAK.py", line 73, in <module>
+    img_gray = np.array(img.convert('L')).astype(float) / 255.0
+                        ~~~~~~~~~~~^^^^^
+  File "/home/greg/gaussian-image-projects/lgi-project/quantum_env/lib/python3.13/site-packages/PIL/Image.py", line 972, in convert
+    self.load()
+    ~~~~~~~~~^^
+  File "/home/greg/gaussian-image-projects/lgi-project/quantum_env/lib/python3.13/site-packages/PIL/ImageFile.py", line 391, in load
+    raise OSError(msg)
+OSError: image file is truncated (0 bytes not processed)
