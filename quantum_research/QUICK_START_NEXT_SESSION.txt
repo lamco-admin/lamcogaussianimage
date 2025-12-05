@@ -1,0 +1,40 @@
+QUANTUM RESEARCH - NEXT SESSION QUICK START
+============================================
+
+1. READ THIS FIRST:
+   HANDOVER_SESSION_2025_12_04_05_COMPLETE.md
+   
+   This explains EVERYTHING from the 18-hour session.
+
+2. CLEAN STATE:
+   - No processes running
+   - 73GB RAM free
+   - All data collected and saved
+
+3. ONE CLEAR ACTIONABLE FINDING:
+   Isotropic edges work better (+1.87 dB validated on 5 images)
+   
+   Implementation: encode_error_driven_adam_isotropic() exists
+   Location: packages/lgi-rs/lgi-encoder-v2/src/lib.rs:744-888
+
+4. KEY DATA FILES:
+   - kodak_gaussian_data/*.csv (682K trajectories)
+   - gaussian_channels_kodak_quantum.json (8 quantum channels)
+   - kodak_gaussians_quantum_ready_enhanced.pkl (10D features)
+
+5. WHAT DIDN'T WORK:
+   - Quantum clustering (silhouette 0.009 vs classical 0.547)
+   - Running multiple experiments simultaneously (crashes)
+   - 1,483+ samples (OOM crashes)
+
+6. BEFORE STARTING NEW WORK:
+   - Decide: What's the primary goal?
+   - Choose: Quantum or classical clustering?
+   - Pick: ONE focused experiment
+
+7. DON'T:
+   - Run multiple things at once
+   - Try to use quantum without clear hypothesis
+   - Proceed without reading handover
+
+READ HANDOVER FIRST. It explains everything.
