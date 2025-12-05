@@ -121,7 +121,7 @@ fn compute_v2_gradient(
     height: u32,
     param_name: &str,
 ) -> f32 {
-    // V2-style gradient computation (matches optimizer_v2.rs)
+    // FIXED V2-style gradient (matches optimizer_v2.rs with position negation)
     let rendered = RendererV2::render(gaussians, width, height);
     let gaussian = &gaussians[0];
 
@@ -165,26 +165,27 @@ fn compute_v2_gradient(
 
             if weight < 1e-10 { continue; }
 
-            // Color gradient
+            // Color gradient: simple weighted contribution
             grad_color_r += error_r * weight;
 
-            let error_weighted = error_r * gaussian.color.r
-                               + error_g * gaussian.color.g
-                               + error_b * gaussian.color.b;
+            // error_weighted = error · color (like Adam)
+            let error_weighted = error_r * gaussian.color.r +
+                                error_g * gaussian.color.g +
+                                error_b * gaussian.color.b;
 
-            // Position gradient (V2 formula)
+            // Position gradient (only x negated based on FD comparison)
             let grad_weight_x = weight * (dx_rot * cos_t / (sx * sx) + dy_rot * (-sin_t) / (sy * sy));
             let grad_weight_y = weight * (dx_rot * sin_t / (sx * sx) + dy_rot * cos_t / (sy * sy));
-            grad_position_x += error_weighted * grad_weight_x;
-            grad_position_y += error_weighted * grad_weight_y;
+            grad_position_x -= error_weighted * grad_weight_x;  // MINUS for x
+            grad_position_y += error_weighted * grad_weight_y;  // PLUS for y
 
-            // Scale gradient (V2 formula)
+            // Scale gradient
             let grad_weight_sx = weight * (dx_rot / sx).powi(2) * (1.0 / sx);
             let grad_weight_sy = weight * (dy_rot / sy).powi(2) * (1.0 / sy);
             grad_scale_x += error_weighted * grad_weight_sx;
             grad_scale_y += error_weighted * grad_weight_sy;
 
-            // Rotation gradient (V2 formula)
+            // Rotation gradient
             let d_dx_rot_dtheta = -dx * sin_t + dy * cos_t;
             let d_dy_rot_dtheta = -dx * cos_t - dy * sin_t;
             let d_dist_sq_dtheta = 2.0 * (
