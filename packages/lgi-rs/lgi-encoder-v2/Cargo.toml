@@ -22,6 +22,8 @@ serde = { version = "1.0", features = ["derive"] }  # For metadata/JSON
 serde_json = "1.0"  # For metadata/JSON
 ndarray = "0.16"  # For numpy array handling
 ndarray-npy = "0.9"  # For loading .npy files from preprocessing
+levenberg-marquardt = "0.14"  # For nonlinear least-squares optimization
+nalgebra = "0.33"  # Required by levenberg-marquardt
 
 [dev-dependencies]
 env_logger = "0.11"

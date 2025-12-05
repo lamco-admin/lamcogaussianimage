@@ -116,6 +116,7 @@ impl StructureTensor {
 ///
 /// Stores structure tensor for each pixel, enabling efficient
 /// edge-aware processing.
+#[derive(Clone)]
 pub struct StructureTensorField {
     /// Image width
     pub width: u32,

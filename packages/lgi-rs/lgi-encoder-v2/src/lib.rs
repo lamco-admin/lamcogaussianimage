@@ -99,6 +99,11 @@ impl EncoderV2 {
         count
     }
 
+    /// Get reference to structure tensor (for data logging)
+    pub fn get_structure_tensor(&self) -> &StructureTensorField {
+        &self.structure_tensor
+    }
+
     /// Hybrid Gaussian count: Entropy (60%) + Gradient (40%)
     ///
     /// Research-backed approach combining:
@@ -557,6 +562,531 @@ impl EncoderV2 {
                 // Restore settings
                 optimizer.learning_rate = lr_full;
                 optimizer.max_iterations = 100;
+            }
+        }
+
+        gaussians
+    }
+
+    /// Error-driven encoding with Adam optimizer AND data logging
+    ///
+    /// This version captures Gaussian configurations during optimization for quantum research.
+    /// Same algorithm as `encode_error_driven_adam` but with callback logging.
+    ///
+    /// # Parameters
+    /// - `initial_gaussians`: Starting grid size
+    /// - `max_gaussians`: Maximum Gaussians allowed
+    /// - `image_id`: Identifier for this image (e.g., "kodim01")
+    /// - `logger`: Optional data logger for capturing Gaussian states
+    pub fn encode_error_driven_adam_with_logger(
+        &self,
+        initial_gaussians: usize,
+        max_gaussians: usize,
+        image_id: &str,
+        mut logger: Option<&mut dyn crate::gaussian_logger::GaussianLogger>,
+    ) -> Vec<Gaussian2D<f32, Euler<f32>>> {
+        use crate::renderer_v2::RendererV2;
+        use crate::adam_optimizer::AdamOptimizer;
+
+        // Start with structure-tensor-aware initialization
+        let grid_size = (initial_gaussians as f32).sqrt().ceil() as u32;
+        let mut gaussians = self.initialize_gaussians(grid_size);
+
+        log::info!("🎯 Error-driven encoding with data logging:");
+        log::info!("  Initial Gaussians: {} (structure-tensor aware)", gaussians.len());
+        log::info!("  Max Gaussians: {}", max_gaussians);
+        log::info!("  Image ID: {}", image_id);
+        log::info!("  Logging: Enabled (every 10th iteration)");
+
+        let mut optimizer = AdamOptimizer::default();
+        optimizer.max_iterations = 100;
+
+        let target_error = 0.001;
+        let split_percentile = 0.10;
+
+        for pass in 0..10 {
+            let n_before = gaussians.len();
+
+            // Set logger context and optimize with logging
+            let loss = match logger.as_deref_mut() {
+                Some(log) => {
+                    log.set_context(image_id.to_string(), pass);
+                    optimizer.optimize_with_logger(&mut gaussians, &self.target, Some(log))
+                }
+                None => {
+                    optimizer.optimize_with_logger(&mut gaussians, &self.target, None)
+                }
+            };
+
+            // Apply geodesic EDT anti-bleeding constraints
+            self.apply_geodesic_clamping(&mut gaussians);
+
+            let rendered = RendererV2::render(&gaussians, self.target.width, self.target.height);
+            let psnr = self.compute_psnr(&rendered);
+
+            log::info!("  Pass {}: N={}, PSNR={:.2} dB, loss={:.6}", pass, gaussians.len(), psnr, loss);
+
+            if loss < target_error {
+                log::info!("  ✅ Converged to target error!");
+                break;
+            }
+
+            if gaussians.len() >= max_gaussians {
+                log::info!("  ⚠️  Reached max Gaussians limit");
+                break;
+            }
+
+            // Find high-error regions
+            let error_map = self.compute_error_map(&rendered);
+            let hotspots = self.find_hotspots(&error_map, split_percentile);
+
+            if hotspots.is_empty() {
+                log::info!("  ✅ No more hotspots to split");
+                break;
+            }
+
+            let batch_size = hotspots.len();
+            log::info!("    Adding {} Gaussians at high-error locations", batch_size);
+
+            // Add Gaussians at hotspots
+            let current_n = gaussians.len();
+            let gamma = Self::adaptive_gamma(current_n);
+            let width_px = self.target.width as f32;
+            let height_px = self.target.height as f32;
+            let sigma_base_px = gamma * ((width_px * height_px) / current_n as f32).sqrt();
+
+            for (x, y, _error) in hotspots {
+                if gaussians.len() >= max_gaussians {
+                    break;
+                }
+
+                let position = Vector2::new(
+                    x as f32 / self.target.width as f32,
+                    y as f32 / self.target.height as f32,
+                );
+
+                let color = self.target.get_pixel(x, y)
+                    .unwrap_or(Color4::new(0.5, 0.5, 0.5, 1.0));
+
+                let tensor = self.structure_tensor.get(x, y);
+                let coherence = tensor.coherence;
+                let geod_dist_px = self.geodesic_edt.get_distance(x, y);
+
+                let (mut sig_para_px, mut sig_perp_px, rotation_angle) = if coherence < 0.2 {
+                    (sigma_base_px, sigma_base_px, 0.0)
+                } else {
+                    let sigma_perp = sigma_base_px / (1.0 + 3.0 * coherence);
+                    let sigma_para = 4.0 * sigma_perp;
+                    let angle = tensor.eigenvector_major.y.atan2(tensor.eigenvector_major.x);
+                    (sigma_para, sigma_perp, angle)
+                };
+
+                let max_sigma_px = geod_dist_px * 0.8;
+                sig_para_px = sig_para_px.min(max_sigma_px);
+                sig_perp_px = sig_perp_px.min(max_sigma_px);
+
+                // Normalize to [0,1] with defensive clamping to prevent NaN
+                let sig_para = (sig_para_px / width_px).clamp(0.001, 0.5);
+                let sig_perp = (sig_perp_px / height_px).clamp(0.001, 0.5);
+
+                // Validate all parameters before creating Gaussian
+                if position.x.is_nan() || position.y.is_nan() ||
+                   sig_para.is_nan() || sig_perp.is_nan() ||
+                   rotation_angle.is_nan() ||
+                   color.r.is_nan() || color.g.is_nan() || color.b.is_nan() {
+                    log::warn!("  ⚠️  Skipping Gaussian at ({}, {}) - NaN parameters detected", x, y);
+                    continue;
+                }
+
+                gaussians.push(Gaussian2D::new(
+                    position,
+                    Euler::new(sig_para, sig_perp, rotation_angle),
+                    color,
+                    1.0,
+                ));
+            }
+
+            // Warmup phase for new Gaussians
+            // NEW: Use proper continuous warmup with logging
+            let n_after = gaussians.len();
+            let n_added = n_after - n_before;
+
+            if n_added > 0 {
+                let warmup_iters = ((n_added / 2) as usize).clamp(10, 50);
+                log::info!("    Warmup: {} iterations (continuous, preserves Adam momentum)", warmup_iters);
+
+                // Create fresh optimizer for warmup to avoid momentum corruption
+                let mut warmup_optimizer = AdamOptimizer::default();
+                warmup_optimizer.learning_rate = optimizer.learning_rate * 0.5;  // Lower LR for stability
+                warmup_optimizer.max_iterations = warmup_iters;
+
+                // Set logger context for warmup pass
+                if let Some(log) = logger.as_deref_mut() {
+                    log.set_context(format!("{}_warmup", image_id), pass);
+                }
+
+                // Run continuous warmup iterations with logging
+                let _ = match logger.as_deref_mut() {
+                    Some(log) => warmup_optimizer.optimize_with_logger(&mut gaussians, &self.target, Some(log)),
+                    None => warmup_optimizer.optimize_with_logger(&mut gaussians, &self.target, None),
+                };
+            }
+        }
+
+        // Final flush of logger
+        if let Some(log) = logger.as_deref_mut() {
+            let _ = log.flush();
+        }
+
+        gaussians
+    }
+
+    /// Error-driven encoding with ISOTROPIC edges (quantum-guided)
+    ///
+    /// **QUANTUM DISCOVERY VALIDATION**: Tests quantum finding that isotropic
+    /// Gaussians work better than anisotropic ones for edge representation.
+    ///
+    /// Quantum channels 3, 4, 7 (high quality) all show σ_x ≈ σ_y despite
+    /// high edge coherence (>0.96). This contradicts classical assumption
+    /// that edges need elongated Gaussians.
+    ///
+    /// # Difference from Standard Method
+    /// - Edges use SMALL ISOTROPIC Gaussians (σ_x = σ_y)
+    /// - Current method uses ANISOTROPIC (σ_parallel = 4× σ_perp)
+    /// - All other logic identical (same optimizer, same refinement)
+    ///
+    /// # Expected Result
+    /// If quantum is correct: +5-10 dB improvement on edge quality
+    /// Current edge PSNR: 1.56 dB → Quantum prediction: 10-15 dB
+    pub fn encode_error_driven_adam_isotropic(&self, initial_gaussians: usize, max_gaussians: usize) -> Vec<Gaussian2D<f32, Euler<f32>>> {
+        use crate::renderer_v2::RendererV2;
+        use crate::adam_optimizer::AdamOptimizer;
+
+        // Start with structure-tensor-aware initialization
+        let grid_size = (initial_gaussians as f32).sqrt().ceil() as u32;
+        let mut gaussians = self.initialize_gaussians(grid_size);
+
+        log::info!("🎯 ISOTROPIC edge encoding (quantum-guided):");
+        log::info!("  Initial Gaussians: {} (structure-tensor aware)", gaussians.len());
+        log::info!("  Max Gaussians: {}", max_gaussians);
+        log::info!("  Edge strategy: ISOTROPIC (σ_x = σ_y) - testing quantum discovery");
+
+        let mut optimizer = AdamOptimizer::default();
+        optimizer.max_iterations = 100;
+
+        let target_error = 0.001;
+        let split_percentile = 0.10;
+
+        for pass in 0..10 {
+            let n_before = gaussians.len();
+
+            // Optimize with Adam
+            let loss = optimizer.optimize(&mut gaussians, &self.target);
+
+            // Apply geodesic EDT anti-bleeding constraints
+            self.apply_geodesic_clamping(&mut gaussians);
+
+            let rendered = RendererV2::render(&gaussians, self.target.width, self.target.height);
+            let psnr = self.compute_psnr(&rendered);
+
+            log::info!("  Pass {}: N={}, PSNR={:.2} dB, loss={:.6}", pass, gaussians.len(), psnr, loss);
+
+            if loss < target_error {
+                log::info!("  ✅ Converged to target error!");
+                break;
+            }
+
+            if gaussians.len() >= max_gaussians {
+                log::info!("  ⚠️  Reached max Gaussians limit");
+                break;
+            }
+
+            // Find high-error regions
+            let error_map = self.compute_error_map(&rendered);
+            let hotspots = self.find_hotspots(&error_map, split_percentile);
+
+            if hotspots.is_empty() {
+                log::info!("  ✅ No more hotspots to split");
+                break;
+            }
+
+            let batch_size = hotspots.len();
+            log::info!("    Adding {} Gaussians at high-error locations (ISOTROPIC)", batch_size);
+
+            // Add Gaussians at hotspots
+            let current_n = gaussians.len();
+            let gamma = Self::adaptive_gamma(current_n);
+            let width_px = self.target.width as f32;
+            let height_px = self.target.height as f32;
+            let sigma_base_px = gamma * ((width_px * height_px) / current_n as f32).sqrt();
+
+            for (x, y, _error) in hotspots {
+                if gaussians.len() >= max_gaussians {
+                    break;
+                }
+
+                let position = Vector2::new(
+                    x as f32 / self.target.width as f32,
+                    y as f32 / self.target.height as f32,
+                );
+
+                let color = self.target.get_pixel(x, y)
+                    .unwrap_or(Color4::new(0.5, 0.5, 0.5, 1.0));
+
+                let tensor = self.structure_tensor.get(x, y);
+                let coherence = tensor.coherence;
+                let geod_dist_px = self.geodesic_edt.get_distance(x, y);
+
+                // QUANTUM-GUIDED: Use isotropic for ALL coherence levels
+                let sigma_iso_px = if coherence < 0.2 {
+                    // Smooth regions: standard size
+                    sigma_base_px
+                } else {
+                    // Edges: SMALLER isotropic (quantum channels 3,4,7)
+                    // Quantum shows: smaller scales work better at edges
+                    sigma_base_px / (1.0 + 2.0 * coherence)
+                };
+
+                // Geodesic clamping
+                let max_sigma_px = geod_dist_px * 0.8;
+                let sig_px = sigma_iso_px.min(max_sigma_px);
+
+                // Normalize to [0,1] with defensive clamping
+                let sigma = (sig_px / width_px.max(height_px)).clamp(0.001, 0.5);
+
+                // Validate before creating
+                if sigma.is_nan() || color.r.is_nan() || color.g.is_nan() || color.b.is_nan() {
+                    log::warn!("  ⚠️  Skipping Gaussian at ({}, {}) - NaN detected", x, y);
+                    continue;
+                }
+
+                // Create ISOTROPIC Gaussian (σ_x = σ_y, rotation = 0)
+                gaussians.push(Gaussian2D::new(
+                    position,
+                    Euler::new(sigma, sigma, 0.0),  // Isotropic!
+                    color,
+                    1.0,
+                ));
+            }
+
+            // Warmup phase
+            let n_after = gaussians.len();
+            let n_added = n_after - n_before;
+
+            if n_added > 0 {
+                let warmup_iters = ((n_added / 2) as usize).clamp(10, 50);
+                log::info!("    Warmup: {} iterations", warmup_iters);
+
+                let mut warmup_optimizer = AdamOptimizer::default();
+                warmup_optimizer.learning_rate = optimizer.learning_rate * 0.5;
+                warmup_optimizer.max_iterations = warmup_iters;
+                let _ = warmup_optimizer.optimize(&mut gaussians, &self.target);
+            }
+        }
+
+        gaussians
+    }
+
+    /// Error-driven encoding with OptimizerV2 (gradient descent + MS-SSIM/edge-weighted)
+    ///
+    /// **Q2 RESEARCH**: Tests if gradient descent with perceptual loss works better
+    /// than Adam for certain quantum channels.
+    ///
+    /// OptimizerV2 features:
+    /// - Simple gradient descent (no momentum)
+    /// - Optional MS-SSIM loss (perceptual quality)
+    /// - Optional edge-weighted gradients
+    /// - GPU acceleration support
+    pub fn encode_error_driven_v2(&self, initial_gaussians: usize, max_gaussians: usize, use_ms_ssim: bool) -> Vec<Gaussian2D<f32, Euler<f32>>> {
+        use crate::renderer_v2::RendererV2;
+        use crate::optimizer_v2::OptimizerV2;
+
+        let grid_size = (initial_gaussians as f32).sqrt().ceil() as u32;
+        let mut gaussians = self.initialize_gaussians(grid_size);
+
+        log::info!("🎯 Error-driven encoding (OptimizerV2):");
+        log::info!("  Optimizer: Gradient descent");
+        log::info!("  Loss: {}", if use_ms_ssim { "MS-SSIM (perceptual)" } else { "L2" });
+
+        let mut optimizer = OptimizerV2::default();
+        optimizer.max_iterations = 100;
+        optimizer.use_ms_ssim = use_ms_ssim;
+
+        let target_error = 0.001;
+        let split_percentile = 0.10;
+
+        for pass in 0..10 {
+            let loss = optimizer.optimize(&mut gaussians, &self.target);
+            self.apply_geodesic_clamping(&mut gaussians);
+
+            let rendered = RendererV2::render(&gaussians, self.target.width, self.target.height);
+            let psnr = self.compute_psnr(&rendered);
+
+            log::info!("  Pass {}: N={}, PSNR={:.2} dB, loss={:.6}", pass, gaussians.len(), psnr, loss);
+
+            if loss < target_error || gaussians.len() >= max_gaussians {
+                break;
+            }
+
+            let error_map = self.compute_error_map(&rendered);
+            let hotspots = self.find_hotspots(&error_map, split_percentile);
+
+            if hotspots.is_empty() {
+                break;
+            }
+
+            // Add Gaussians (same logic as adam method)
+            let current_n = gaussians.len();
+            let gamma = Self::adaptive_gamma(current_n);
+            let width_px = self.target.width as f32;
+            let height_px = self.target.height as f32;
+            let sigma_base_px = gamma * ((width_px * height_px) / current_n as f32).sqrt();
+
+            for (x, y, _error) in hotspots {
+                if gaussians.len() >= max_gaussians {
+                    break;
+                }
+
+                let position = Vector2::new(
+                    x as f32 / self.target.width as f32,
+                    y as f32 / self.target.height as f32,
+                );
+
+                let color = self.target.get_pixel(x, y)
+                    .unwrap_or(Color4::new(0.5, 0.5, 0.5, 1.0));
+
+                let tensor = self.structure_tensor.get(x, y);
+                let coherence = tensor.coherence;
+                let geod_dist_px = self.geodesic_edt.get_distance(x, y);
+
+                let (mut sig_para_px, mut sig_perp_px, rotation_angle) = if coherence < 0.2 {
+                    (sigma_base_px, sigma_base_px, 0.0)
+                } else {
+                    let sigma_perp = sigma_base_px / (1.0 + 3.0 * coherence);
+                    let sigma_para = 4.0 * sigma_perp;
+                    let angle = tensor.eigenvector_major.y.atan2(tensor.eigenvector_major.x);
+                    (sigma_para, sigma_perp, angle)
+                };
+
+                let max_sigma_px = geod_dist_px * 0.8;
+                sig_para_px = sig_para_px.min(max_sigma_px);
+                sig_perp_px = sig_perp_px.min(max_sigma_px);
+
+                let sig_para = (sig_para_px / width_px).clamp(0.001, 0.5);
+                let sig_perp = (sig_perp_px / height_px).clamp(0.001, 0.5);
+
+                if sig_para.is_nan() || sig_perp.is_nan() || rotation_angle.is_nan() ||
+                   color.r.is_nan() || color.g.is_nan() || color.b.is_nan() {
+                    continue;
+                }
+
+                gaussians.push(Gaussian2D::new(
+                    position,
+                    Euler::new(sig_para, sig_perp, rotation_angle),
+                    color,
+                    1.0,
+                ));
+            }
+        }
+
+        gaussians
+    }
+
+    /// Error-driven encoding with OptimizerV3 (perceptual: MS-SSIM + edge-weighted)
+    ///
+    /// **Q2 RESEARCH**: Tests if perceptual optimization works better than Adam
+    /// for certain quantum channels.
+    ///
+    /// OptimizerV3 always uses:
+    /// - MS-SSIM loss (perceptual quality metric)
+    /// - Edge-weighted gradients (prioritizes edges)
+    pub fn encode_error_driven_v3(&self, initial_gaussians: usize, max_gaussians: usize) -> Vec<Gaussian2D<f32, Euler<f32>>> {
+        use crate::renderer_v2::RendererV2;
+        use crate::optimizer_v3_perceptual::OptimizerV3;
+
+        let grid_size = (initial_gaussians as f32).sqrt().ceil() as u32;
+        let mut gaussians = self.initialize_gaussians(grid_size);
+
+        log::info!("🎯 Error-driven encoding (OptimizerV3 - Perceptual):");
+        log::info!("  Loss: MS-SSIM + Edge-weighted");
+
+        let mut optimizer = OptimizerV3::default();
+        optimizer.max_iterations = 100;
+
+        let target_error = 0.001;
+        let split_percentile = 0.10;
+
+        for pass in 0..10 {
+            let loss = optimizer.optimize(&mut gaussians, &self.target, &self.structure_tensor);
+            self.apply_geodesic_clamping(&mut gaussians);
+
+            let rendered = RendererV2::render(&gaussians, self.target.width, self.target.height);
+            let psnr = self.compute_psnr(&rendered);
+
+            log::info!("  Pass {}: N={}, PSNR={:.2} dB, loss={:.6}", pass, gaussians.len(), psnr, loss);
+
+            if loss < target_error || gaussians.len() >= max_gaussians {
+                break;
+            }
+
+            let error_map = self.compute_error_map(&rendered);
+            let hotspots = self.find_hotspots(&error_map, split_percentile);
+
+            if hotspots.is_empty() {
+                break;
+            }
+
+            // Add Gaussians (same logic)
+            let current_n = gaussians.len();
+            let gamma = Self::adaptive_gamma(current_n);
+            let width_px = self.target.width as f32;
+            let height_px = self.target.height as f32;
+            let sigma_base_px = gamma * ((width_px * height_px) / current_n as f32).sqrt();
+
+            for (x, y, _error) in hotspots {
+                if gaussians.len() >= max_gaussians {
+                    break;
+                }
+
+                let position = Vector2::new(
+                    x as f32 / self.target.width as f32,
+                    y as f32 / self.target.height as f32,
+                );
+
+                let color = self.target.get_pixel(x, y)
+                    .unwrap_or(Color4::new(0.5, 0.5, 0.5, 1.0));
+
+                let tensor = self.structure_tensor.get(x, y);
+                let coherence = tensor.coherence;
+                let geod_dist_px = self.geodesic_edt.get_distance(x, y);
+
+                let (mut sig_para_px, mut sig_perp_px, rotation_angle) = if coherence < 0.2 {
+                    (sigma_base_px, sigma_base_px, 0.0)
+                } else {
+                    let sigma_perp = sigma_base_px / (1.0 + 3.0 * coherence);
+                    let sigma_para = 4.0 * sigma_perp;
+                    let angle = tensor.eigenvector_major.y.atan2(tensor.eigenvector_major.x);
+                    (sigma_para, sigma_perp, angle)
+                };
+
+                let max_sigma_px = geod_dist_px * 0.8;
+                sig_para_px = sig_para_px.min(max_sigma_px);
+                sig_perp_px = sig_perp_px.min(max_sigma_px);
+
+                let sig_para = (sig_para_px / width_px).clamp(0.001, 0.5);
+                let sig_perp = (sig_perp_px / height_px).clamp(0.001, 0.5);
+
+                if sig_para.is_nan() || sig_perp.is_nan() || rotation_angle.is_nan() ||
+                   color.r.is_nan() || color.g.is_nan() || color.b.is_nan() {
+                    continue;
+                }
+
+                gaussians.push(Gaussian2D::new(
+                    position,
+                    Euler::new(sig_para, sig_perp, rotation_angle),
+                    color,
+                    1.0,
+                ));
             }
         }
 
@@ -1237,5 +1767,10 @@ mod tests {
     }
 }
 pub mod adam_optimizer;
+pub mod hybrid_optimizer;  // Adam → L-BFGS hybrid (3DGS-LM approach)
+pub mod lm_optimizer;  // Levenberg-Marquardt (nonlinear least-squares)
+pub mod test_results;  // Persistent test result logging
 pub mod file_writer;
+pub mod gaussian_logger;  // Quantum research: log Gaussian states during optimization
+// pub mod optimizer_lbfgs;  // DEPRECATED: Use hybrid_optimizer with lgi-core/src/lbfgs.rs instead
 pub mod file_reader;
