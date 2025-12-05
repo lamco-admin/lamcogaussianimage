@@ -67,6 +67,24 @@ The difference **IS** due to:
 - Adam 10× LRs: Still converging slowly
 - **Key insight**: V2's gradients have SMALLER magnitude, so Adam's tiny LRs cause V2 to barely move!
 
+### Hypothesis 5: Gradient normalization compensates for magnitude variance
+**Result: CONFIRMED! 🎉**
+| Configuration | Improvement | Notes |
+|---------------|-------------|-------|
+| No normalization (baseline) | +0.00 dB | Loss increased, early stop |
+| Gradient norm + default LR | +0.00 dB | Loss exploded (LR too high) |
+| Gradient norm + lower LR | **+0.56 dB** | 3.5× better than baseline |
+| Gradient norm + Adam-like LR | **+1.17 dB** | **7.3× better than baseline!** |
+
+**This is the key insight!** V2's gradients have varying magnitudes across:
+- Different Gaussians (boundary vs center)
+- Different parameters (position vs color vs scale)
+
+Normalizing gradients to unit length + small LRs creates uniform updates that:
+- Prevent overshooting for high-magnitude gradients
+- Prevent stalling for low-magnitude gradients
+- Bridge 78% of the gap to Adam's +1.52 dB!
+
 ---
 
 ## Key Insight: Why Adam Works
@@ -124,7 +142,8 @@ gradients[i].position.y += error_weighted * grad_weight_y;
 3. **Adam's per-parameter LRs alone don't help** - V2's gradient magnitudes are SMALLER
 4. **MS-SSIM loss hurts V2** - gradient computation incompatibility
 5. **Edge-weighting and rotation don't help** - same +0.16 dB
-6. **Root cause is gradient computation difference** - not LRs, not moments, not distance formula
+6. **Root cause is gradient magnitude variance** - different Gaussians have wildly different gradient scales
+7. **🎉 BREAKTHROUGH: Gradient normalization + small LRs achieves +1.17 dB!** - bridges 78% of gap to Adam
 
 ## Root Cause Analysis
 
@@ -162,7 +181,8 @@ lgi-encoder-v2/examples/
 ├── test_v2_scaled_lr.rs
 ├── test_v2_with_adam_moments.rs
 ├── test_v2_with_adam_distance.rs
-├── test_v2_with_adam_lrs.rs    # NEW: Tests V2 with Adam's exact LR config
+├── test_v2_with_adam_lrs.rs    # Tests V2 with Adam's exact LR config
+├── test_v2_gradient_norm.rs    # NEW: Gradient normalization - BEST RESULT!
 ├── test_multi_kodak.rs
 └── verify_v2_gradient_signs.rs
 
