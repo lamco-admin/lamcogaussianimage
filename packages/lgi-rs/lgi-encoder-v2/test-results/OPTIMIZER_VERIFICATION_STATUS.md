@@ -248,6 +248,20 @@ gradients[i].position.y += error_weighted * grad_weight_y;  // PLUS for y (origi
 - V2 converges: 19.47 → 19.63 dB (+0.15 dB)
 - Still slower than Adam due to gradient magnitude mismatch (226×)
 
+**LR Scaling Experiment** (test_v2_scaled_lr.rs):
+Scaling up LRs makes V2 WORSE, not better!
+
+| LR Config | Position LR | PSNR Change |
+|-----------|-------------|-------------|
+| Default | 0.1 | **+0.15 dB** |
+| 10× | 1.0 | +0.02 dB |
+| 100× | 10.0 | +0.00 dB |
+| 200× | 20.0 | +0.00 dB |
+
+**Why?** Higher LRs cause oscillation around the minimum. Adam succeeds because
+adaptive `v_hat.sqrt()` dampens oscillations. V2's solution isn't scaling LR -
+it's adding adaptive mechanisms or using L-BFGS.
+
 ---
 
 ## V2 ROOT CAUSE FOUND: Position Gradient Sign Bug
