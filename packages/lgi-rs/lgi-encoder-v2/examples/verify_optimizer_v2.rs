@@ -87,7 +87,10 @@ fn main() {
     let elapsed = start.elapsed();
 
     let final_render = RendererV2::render(&gaussians, width, height);
-    let final_psnr = mse_to_psnr(final_loss);
+    // IMPORTANT: Recompute loss with consistent formula (÷ pixels×3)
+    // The optimizer returns loss ÷ pixels, which is 3× larger
+    let final_loss_consistent = compute_mse(&final_render, &target);
+    let final_psnr = mse_to_psnr(final_loss_consistent);
 
     println!("\n--- FINAL STATE ---");
     println!("Loss (MSE): {:.6}", final_loss);
@@ -95,13 +98,13 @@ fn main() {
     println!("Time: {:.2}s", elapsed.as_secs_f32());
 
     println!("\n=== VERIFICATION RESULTS ===");
-    let loss_decreased = final_loss < initial_loss;
+    let loss_decreased = final_loss_consistent < initial_loss;
     let psnr_improved = final_psnr > initial_psnr;
     let improvement_db = final_psnr - initial_psnr;
 
     println!("Loss decreased: {} ({:.6} -> {:.6})",
              if loss_decreased { "YES ✓" } else { "NO ✗" },
-             initial_loss, final_loss);
+             initial_loss, final_loss_consistent);
     println!("PSNR improved: {} ({:.2} -> {:.2} dB, {:+.2} dB)",
              if psnr_improved { "YES ✓" } else { "NO ✗" },
              initial_psnr, final_psnr, improvement_db);
@@ -114,7 +117,7 @@ fn main() {
     result.initial_psnr = initial_psnr;
     result.final_psnr = final_psnr;
     result.improvement_db = improvement_db;
-    result.final_loss = final_loss;
+    result.final_loss = final_loss_consistent;
     result.elapsed_seconds = elapsed.as_secs_f32();
     result.notes = format!(
         "VERIFICATION. Loss decreased: {}. lr_pos={}, lr_color={}, lr_scale={}",

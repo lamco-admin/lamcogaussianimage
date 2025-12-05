@@ -11,8 +11,8 @@
 | Optimizer | Status | Initial PSNR | Final PSNR | Change | Notes |
 |-----------|--------|--------------|------------|--------|-------|
 | Adam (per-param LR) | **WORKS** | 19.48 dB | 20.66 dB | +1.19 dB | Wrong gradient magnitude but right direction |
-| OptimizerV2 | **BUG FOUND** | 19.47 dB | 15.06 dB | -4.42 dB | Position gradient SIGN error! |
-| OptimizerV2 (Adam LRs) | **BUG FOUND** | 19.47 dB | 14.79 dB | -4.69 dB | Same sign bug |
+| OptimizerV2 | **FIXED** | 19.47 dB | 19.63 dB | +0.15 dB | Position.x sign fixed, converges now |
+| OptimizerV2 (Adam LRs) | **BUG FOUND** | 19.47 dB | 14.79 dB | -4.69 dB | (Pre-fix results) |
 | OptimizerV3 | NOT TESTED | - | - | - | Requires StructureTensor |
 | Hybrid | RUNNING | - | - | - | Adam+L-BFGS |
 | L-M | NOT TESTED | - | - | - | Very slow (finite diff) |
@@ -230,6 +230,23 @@ The gradient computation would only match the renderer if:
 2. sx = sy = 1 (unit scales)
 
 For any real Gaussian with rotation or non-unit scales, gradients are fundamentally wrong.
+
+---
+
+## V2 FIX APPLIED AND VERIFIED (2025-12-05)
+
+**Fix**: Negate position.x gradient only (position.y was already correct)
+
+**Location**: `optimizer_v2.rs:326-327`
+```rust
+gradients[i].position.x -= error_weighted * grad_weight_x;  // MINUS for x
+gradients[i].position.y += error_weighted * grad_weight_y;  // PLUS for y (original)
+```
+
+**Verification Result**:
+- All gradient signs now match finite-difference
+- V2 converges: 19.47 → 19.63 dB (+0.15 dB)
+- Still slower than Adam due to gradient magnitude mismatch (226×)
 
 ---
 

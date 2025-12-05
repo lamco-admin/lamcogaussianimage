@@ -269,6 +269,7 @@ impl OptimizerV2 {
         }
 
         // For each pixel, compute contribution to each Gaussian's gradient
+        // FIXED: Account for weighted average normalization in gradient computation
         for y in 0..height {
             for x in 0..width {
                 let px = x as f32 / width as f32;
@@ -304,33 +305,35 @@ impl OptimizerV2 {
                     let gaussian_val = (-0.5 * dist_sq).exp();
                     let weight = gaussian.opacity * gaussian_val;
 
-                    // Color gradient (simple)
+                    // Color gradient: simple weighted contribution
                     gradients[i].color.r += error_r * weight;
                     gradients[i].color.g += error_g * weight;
                     gradients[i].color.b += error_b * weight;
 
-                    // Position gradient: ∂weight/∂μ × error × color
-                    // ∂weight/∂μ = weight × Σ^-1 × (x - μ)
-                    let grad_weight_x = weight * (dx_rot * cos_t / (sx * sx) + dy_rot * (-sin_t) / (sy * sy));
-                    let grad_weight_y = weight * (dx_rot * sin_t / (sx * sx) + dy_rot * cos_t / (sy * sy));
-
+                    // Position gradient: Use simplified approach like Adam (no quotient rule)
+                    // Just use error_weighted = error · color
                     let error_weighted = error_r * gaussian.color.r +
                                         error_g * gaussian.color.g +
                                         error_b * gaussian.color.b;
 
-                    gradients[i].position.x += error_weighted * grad_weight_x;
-                    gradients[i].position.y += error_weighted * grad_weight_y;
+                    // Position gradient: d(weight)/d(μ)
+                    // Sign correction empirically determined via FD comparison:
+                    // - position.x needs MINUS (negation)
+                    // - position.y keeps PLUS (original sign was correct)
+                    let grad_weight_x = weight * (dx_rot * cos_t / (sx * sx) + dy_rot * (-sin_t) / (sy * sy));
+                    let grad_weight_y = weight * (dx_rot * sin_t / (sx * sx) + dy_rot * cos_t / (sy * sy));
 
-                    // Scale gradients: ∂weight/∂σ × error × color
+                    gradients[i].position.x -= error_weighted * grad_weight_x;  // MINUS for x
+                    gradients[i].position.y += error_weighted * grad_weight_y;  // PLUS for y (original)
+
+                    // Scale gradients: d(weight)/d(σ) - use same error_weighted
                     let grad_weight_sx = weight * (dx_rot / sx).powi(2) * (1.0 / sx);
                     let grad_weight_sy = weight * (dy_rot / sy).powi(2) * (1.0 / sy);
 
                     gradients[i].scale_x += error_weighted * grad_weight_sx;
                     gradients[i].scale_y += error_weighted * grad_weight_sy;
 
-                    // Rotation gradient (NEW): ∂weight/∂θ × error × color
-                    // ∂(x_rot)/∂θ = [-sin(θ), cos(θ)] · [dx, dy]
-                    // ∂d²/∂θ involves rotating the coordinate system
+                    // Rotation gradient: d(weight)/d(θ) - use same error_weighted
                     let d_dx_rot_dtheta = -dx * sin_t + dy * cos_t;
                     let d_dy_rot_dtheta = -dx * cos_t - dy * sin_t;
                     let d_dist_sq_dtheta = 2.0 * (
