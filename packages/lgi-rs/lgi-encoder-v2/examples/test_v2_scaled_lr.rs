@@ -8,8 +8,12 @@
 use lgi_core::ImageBuffer;
 use lgi_encoder_v2::optimizer_v2::OptimizerV2;
 use lgi_encoder_v2::renderer_v2::RendererV2;
+use lgi_encoder_v2::test_results::TestResult;
 use lgi_math::{gaussian::Gaussian2D, parameterization::Euler, vec::Vector2, color::Color4};
 use std::time::Instant;
+use serde_json::json;
+
+const RESULTS_DIR: &str = "lgi-encoder-v2/test-results";
 
 fn main() {
     println!("=== V2 SCALED LEARNING RATE TEST ===\n");
@@ -86,6 +90,25 @@ fn main() {
         println!("  Final:   {:.2} dB", final_psnr);
         println!("  Change:  {:+.2} dB", final_psnr - initial_psnr);
         println!("  Time:    {:.1}s", elapsed.as_secs_f32());
+
+        // Save result using TestResult framework
+        let exp_name = format!("v2_scaled_lr_{}", name.replace(" ", "_").replace("(", "").replace(")", "").replace(",", ""));
+        let mut result = TestResult::new(&exp_name, image_path);
+        result.optimizer = format!("V2 Scaled LR: {}", name);
+        result.image_dimensions = (width, height);
+        result.n_gaussians = n_gaussians;
+        result.iterations = 100;
+        result.initial_psnr = initial_psnr;
+        result.final_psnr = final_psnr;
+        result.improvement_db = final_psnr - initial_psnr;
+        result.final_loss = final_loss;
+        result.elapsed_seconds = elapsed.as_secs_f32();
+        result.extra_metrics = Some(json!({
+            "lr_position": lr_pos,
+            "lr_color": lr_color,
+            "lr_scale": lr_scale,
+        }));
+        let _ = result.save(RESULTS_DIR);
     }
 
     println!("\n=== TEST COMPLETE ===");

@@ -60,6 +60,13 @@ The difference **IS** due to:
 - Higher LRs cause oscillation around minimum
 - Default LR (0.1) gives best result (+0.15 dB)
 
+### Hypothesis 4: Using Adam's exact LRs will help V2
+**Result: REJECTED**
+- V2 Default LRs: +0.16 dB (early stop at iter 27)
+- Adam's exact LRs: +0.06 dB (slow convergence, full 100 iterations)
+- Adam 10× LRs: Still converging slowly
+- **Key insight**: V2's gradients have SMALLER magnitude, so Adam's tiny LRs cause V2 to barely move!
+
 ---
 
 ## Key Insight: Why Adam Works
@@ -114,9 +121,27 @@ gradients[i].position.y += error_weighted * grad_weight_y;
 
 1. **V2 gradient sign bug is fixed** - all directions now match FD
 2. **V2 converges** but slowly (+0.16 dB vs Adam's +1.52 dB)
-3. **Adam's per-parameter LRs are critical** - not just the optimizer structure
+3. **Adam's per-parameter LRs alone don't help** - V2's gradient magnitudes are SMALLER
 4. **MS-SSIM loss hurts V2** - gradient computation incompatibility
 5. **Edge-weighting and rotation don't help** - same +0.16 dB
+6. **Root cause is gradient computation difference** - not LRs, not moments, not distance formula
+
+## Root Cause Analysis
+
+Adam and V2 compute gradients fundamentally differently:
+
+| Aspect | Adam | V2 |
+|--------|------|-----|
+| Distance | Isotropic (dx² + dy²) | Rotated Mahalanobis |
+| Weight formula | Simple exp(-0.5×dist/scale) | Complex rotated Gaussian |
+| Position gradient | Direct ∂weight/∂pos | Chain rule through rotation |
+| Gradient magnitude | Larger | Smaller (needs bigger LR) |
+| LR sensitivity | Small LRs work | Needs 500× larger LRs |
+
+**Key finding**: V2's mathematically correct rotated Mahalanobis distance produces smaller gradients than Adam's simplified isotropic distance. This is because:
+1. Rotation distributes the gradient across multiple dimensions
+2. The chain rule through rotation attenuates gradients
+3. Edge cases at Gaussian boundaries are handled differently
 
 ---
 
@@ -137,6 +162,7 @@ lgi-encoder-v2/examples/
 ├── test_v2_scaled_lr.rs
 ├── test_v2_with_adam_moments.rs
 ├── test_v2_with_adam_distance.rs
+├── test_v2_with_adam_lrs.rs    # NEW: Tests V2 with Adam's exact LR config
 ├── test_multi_kodak.rs
 └── verify_v2_gradient_signs.rs
 

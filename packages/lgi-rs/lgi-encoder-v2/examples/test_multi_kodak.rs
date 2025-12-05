@@ -8,7 +8,11 @@ use lgi_encoder_v2::{
     EncoderV2,
     renderer_v2::RendererV2,
     adam_optimizer::AdamOptimizer,
+    test_results::TestResult,
 };
+use serde_json::json;
+
+const RESULTS_DIR: &str = "lgi-encoder-v2/test-results";
 
 fn main() {
     println!("╔══════════════════════════════════════════════════════════════╗");
@@ -74,6 +78,24 @@ fn main() {
         println!("  Final PSNR:   {:.2} dB (loss: {:.6})", final_psnr, final_loss);
         println!("  Improvement:  {:+.2} dB", improvement);
         println!("  Time:         {:.2}s\n", elapsed.as_secs_f32());
+
+        // Save result using TestResult framework
+        let exp_name = format!("multi_kodak_adam_{}", filename.replace(".png", ""));
+        let mut result = TestResult::new(&exp_name, &path);
+        result.optimizer = "Adam (per-param LRs)".to_string();
+        result.image_dimensions = (target.width, target.height);
+        result.n_gaussians = (grid_size * grid_size) as usize;
+        result.iterations = max_iterations;
+        result.initial_psnr = init_psnr;
+        result.final_psnr = final_psnr;
+        result.improvement_db = improvement;
+        result.final_loss = final_loss;
+        result.elapsed_seconds = elapsed.as_secs_f32();
+        result.extra_metrics = Some(json!({
+            "description": description,
+            "grid_size": grid_size,
+        }));
+        let _ = result.save(RESULTS_DIR);
 
         results.push((filename.to_string(), init_psnr, final_psnr, improvement, elapsed.as_secs_f32()));
     }
