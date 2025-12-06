@@ -14,24 +14,32 @@ Build a corpus of experimental data to understand tool behavior across different
 
 ```
 test-results/
-├── YYYY-MM-DD/                    # Daily results (JSON metrics)
-│   ├── experiment_name_HH-MM-SS.json
+├── YYYY-MM-DD/                    # Daily results
+│   ├── experiment_name_HH-MM-SS.json    # Metrics + parameters
+│   ├── experiment_name_HH-MM-SS.png     # Rendered result (matching timestamp)
+│   ├── experiment_name_HH-MM-SS_aborted.json  # Aborted experiments
 │   └── ...
-├── rendered-images/               # Visual outputs with timestamps
-│   ├── experiment_suffix_YYYY-MM-DD_HH-MM-SS.png
-│   └── ...
+├── overnight-logs/                # Long-running test output logs
+│   └── *.log
+├── rendered-images/               # Legacy location (deprecated)
 ├── README.md                      # This file
-└── EXPERIMENT_FRAMEWORK.md        # Experiment design (needs update)
+└── EXPERIMENT_FRAMEWORK.md        # Experiment design
 ```
 
-## Infrastructure (Rust)
+---
 
-### TestResult struct (`src/test_results.rs`)
+## TestResult Framework (Enhanced Dec 6, 2025)
+
+### Core Types
 
 ```rust
+use lgi_encoder_v2::test_results::{TestResult, TestStatus, OptimizerParams, CodeVersion};
+
+/// Test result with full tracking
 pub struct TestResult {
     pub experiment_name: String,
-    pub timestamp: String,           // ISO format: YYYY-MM-DDTHH:MM:SS
+    pub timestamp: String,           // ISO: YYYY-MM-DDTHH:MM:SS
+    pub status: TestStatus,          // Running, Completed, Aborted, Failed
     pub image_path: String,
     pub image_dimensions: (u32, u32),
     pub n_gaussians: usize,
@@ -43,109 +51,204 @@ pub struct TestResult {
     pub final_loss: f32,
     pub elapsed_seconds: f32,
     pub notes: String,
-    pub extra_metrics: Option<serde_json::Value>,  // Flexible extension
+    pub params: OptimizerParams,     // All optimizer parameters
+    pub code_version: CodeVersion,   // Git hash for reproducibility
+    pub rendered_image_path: Option<String>,
+    pub extra_metrics: Option<serde_json::Value>,
+}
+
+/// Git version info (auto-captured)
+pub struct CodeVersion {
+    pub git_hash: Option<String>,    // Short commit hash
+    pub dirty: Option<bool>,         // Uncommitted changes?
+    pub branch: Option<String>,      // Current branch
+}
+
+/// Structured optimizer parameters
+pub struct OptimizerParams {
+    pub lr_position: Option<f32>,
+    pub lr_color: Option<f32>,
+    pub lr_scale: Option<f32>,
+    pub lr_opacity: Option<f32>,
+    pub lr_rotation: Option<f32>,
+    pub beta1: Option<f32>,
+    pub beta2: Option<f32>,
+    pub densify_grad_threshold: Option<f32>,
+    pub prune_opacity_threshold: Option<f32>,
+    pub densify_interval: Option<usize>,
+    pub start_gaussians: Option<usize>,
+    pub target_gaussians: Option<usize>,
+    pub custom: HashMap<String, serde_json::Value>,  // Additional params
 }
 ```
 
-### Key Functions
+### Test Status
 
 ```rust
-// Save metrics to JSON
-result.save(RESULTS_DIR) -> Result<String>
-
-// Save rendered image with timestamp
-save_rendered_image(&image, RESULTS_DIR, "experiment_name", "suffix") -> Result<String>
-
-// Load all results from a date
-load_results(RESULTS_DIR, "2025-12-05") -> Vec<TestResult>
+pub enum TestStatus {
+    Completed,  // Test finished successfully
+    Aborted,    // Test manually stopped (e.g., diverging)
+    Failed,     // Test errored
+    Running,    // Test still in progress
+}
 ```
 
-### Usage in Examples
+---
+
+## Usage Examples
+
+### Basic Usage (with image saving)
 
 ```rust
-use lgi_encoder_v2::test_results::{TestResult, save_rendered_image};
+use lgi_encoder_v2::test_results::TestResult;
 
-const RESULTS_DIR: &str = ".../test-results";
+const RESULTS_DIR: &str = "lgi-encoder-v2/test-results";
 
-let mut result = TestResult::new("my_experiment", "/path/to/image.png");
+// Create result at start of test
+let mut result = TestResult::new("my_experiment", image_path);
 result.optimizer = "Adam (per-param LRs)".to_string();
-result.n_gaussians = 576;
-// ... run experiment, fill in metrics ...
-result.save(RESULTS_DIR)?;
-save_rendered_image(&final_image, RESULTS_DIR, "my_experiment", "final")?;
+result.n_gaussians = 256;
+result.iterations = 200;
+result.initial_psnr = init_psnr;
+result.image_dimensions = (target.width, target.height);
+
+// Record optimizer parameters
+result.set_param("lr_position", 0.0002);
+result.set_param("lr_color", 0.02);
+result.set_param("lr_scale", 0.005);
+result.set_param("lr_opacity", 0.05);
+result.set_param("beta1", 0.9);
+result.set_param("beta2", 0.999);
+
+// ... run experiment ...
+
+// Complete and save with rendered image
+result.final_psnr = final_psnr;
+result.improvement_db = final_psnr - init_psnr;
+result.elapsed_seconds = elapsed;
+result.complete();
+let _ = result.save_with_image(&rendered, RESULTS_DIR);
 ```
 
-## Completed Experiments (2025-12-05)
+### Handling Aborted Tests
 
-### 1. per_param_lr_comparison.json
-**Finding**: Per-parameter LRs beat single LR by **+4.79 dB**
-- Single LR (0.01): Chaotic oscillation, -1.78 dB regression
-- Per-param LR: Monotonic convergence, +3.01 dB improvement
-- **Key insight**: Position LR must be ~100× smaller than color (0.0002 vs 0.02)
+```rust
+// If test is diverging or going wrong
+if psnr < init_psnr - 5.0 {
+    result.abort(
+        "PSNR diverging - dropped 5dB below initial",
+        current_iteration,
+        current_psnr
+    );
+    let _ = result.save_partial(RESULTS_DIR);  // Saves as *_aborted.json
+    return;
+}
+```
 
-### 2. multi_kodak_per_param_lr.json
-**Finding**: Average +2.25 dB across 5 image types, but **huge variance**
-| Image | Type | Improvement |
-|-------|------|-------------|
-| kodim03 | Natural gradients | +3.75 dB (best) |
-| kodim01 | Geometric edges | +2.01 dB |
-| kodim08 | Architectural texture | +1.99 dB |
-| kodim13 | Smooth regions | +1.83 dB |
-| kodim05 | Organic textures | +1.66 dB (worst) |
+### Custom Parameters
 
-### 3. placement_strategy_comparison.json
-**Finding**: "Smart" placement performed **8 dB worse** than uniform grid!
-| Strategy | PSNR | vs Baseline |
-|----------|------|-------------|
-| Uniform (iso) | 23.02 dB | baseline |
-| Uniform (aniso) | 23.01 dB | -0.01 dB |
-| PPM (iso) | 14.22 dB | **-8.80 dB** |
-| PPM (aniso) | 14.33 dB | **-8.70 dB** |
-| Laplacian | 14.84 dB | **-8.19 dB** |
+```rust
+// For densification experiments
+result.set_param("densify_grad_threshold", 0.0002);
+result.set_param("prune_opacity_threshold", 0.1);
+result.set_param("densify_interval", 30);
+result.set_param("start_gaussians", 64);
+result.set_param("target_gaussians", 256);
 
-**Note**: This is evidence about how these tools behave with current optimizer settings, not a conclusion that PPM is bad.
+// Custom parameters (any JSON-serializable value)
+result.set_param("custom_metric", some_value);
+result.set_param("phase1_iters", 100_usize);
+```
 
-### 4. hypotheses_feature_placement.json
-Draft hypotheses about image-type to placement mapping. **Treat as working notes, not conclusions.**
+---
 
-## Available Optimizers (to be tested systematically)
+## Output Files
 
-| Optimizer | File | Status |
-|-----------|------|--------|
-| Adam (per-param LR) | `adam_optimizer.rs` | Partially tested |
-| L-BFGS | `optimizer_lbfgs.rs` | Not tested |
-| Levenberg-Marquardt | `lm_optimizer.rs` | Not tested |
-| Hybrid | `hybrid_optimizer.rs` | Not tested |
-| Optimizer v2 (basic GD) | `optimizer_v2.rs` | Not tested |
-| Optimizer v3 (perceptual) | `optimizer_v3_perceptual.rs` | Not tested |
+### JSON Result (experiment_name_HH-MM-SS.json)
 
-## Available Initialization Strategies (to be tested)
+```json
+{
+  "experiment_name": "combined_hybrid_prune",
+  "timestamp": "2025-12-20T15:30:45",
+  "status": "Completed",
+  "image_path": "/path/to/kodim03.png",
+  "image_dimensions": [768, 512],
+  "n_gaussians": 187,
+  "iterations": 200,
+  "optimizer": "Hybrid: Dense→Prune→Optimize",
+  "initial_psnr": 20.27,
+  "final_psnr": 22.30,
+  "improvement_db": 2.03,
+  "final_loss": 0.0,
+  "elapsed_seconds": 218.4,
+  "notes": "",
+  "params": {
+    "lr_position": 0.0002,
+    "lr_color": 0.02,
+    "lr_scale": 0.005,
+    "lr_opacity": 0.05,
+    "prune_opacity_threshold": 0.1,
+    "start_gaussians": 256,
+    "final_gaussians": 187
+  },
+  "code_version": {
+    "git_hash": "af677c0",
+    "dirty": true,
+    "branch": "main"
+  },
+  "rendered_image_path": "test-results/2025-12-20/combined_hybrid_prune_15-30-45.png"
+}
+```
 
-| Strategy | File | Status |
-|----------|------|--------|
-| Grid (uniform) | default | Tested |
-| GDGS | `gdgs_init.rs` | Not tested |
-| Gradient Peak | `gradient_peak_init.rs` | Not tested |
-| K-means | `kmeans_init.rs` | Not tested |
-| SLIC superpixel | `slic_init.rs` | Not tested |
+### PNG Image (same timestamp as JSON)
 
-## Alternative Techniques (from EXISTING_TECHNIQUES_RESEARCH.md)
+The rendered output image with matching filename/timestamp for easy correlation.
 
-These documented alternatives have NOT been implemented/tested:
-1. **Separable 1D×1D Gaussians** - Product of 1D Gaussians for edges (8× speedup claimed)
-2. **Gabor functions** - Gaussian × sinusoid (may be better for edges/textures)
-3. **Truncation radius** - Standard optimization, claimed 100× speedup
+---
 
-## Next Experiments Needed
+## Versioning Strategy
 
-1. **Optimizer tuning**: Figure out optimal settings for EACH optimizer before comparison
-2. **Systematic optimizer comparison**: Same init, same images, different optimizers
-3. **Full Kodak dataset**: All 24 images, after optimizer tuning
-4. **Alternative techniques**: Gabor, separable 1D×1D, truncation radius
+### Hybrid Approach (Recommended)
+
+1. **Automatic**: TestResult captures git hash + dirty status on creation
+2. **Manual checkpoints**: Commit before running important experiments
+
+```bash
+# Before running experiment
+git add -A && git commit -m "Checkpoint before hybrid pruning test"
+
+# Run experiment
+cargo run --release --example test_combined_densification -p lgi-encoder-v2
+
+# Results now linked to clean commit
+```
+
+### Reproducing Results
+
+1. Check the `code_version.git_hash` in the JSON
+2. If `dirty: false`, checkout that commit
+3. If `dirty: true`, the exact code state wasn't captured (check session notes)
+
+---
 
 ## Principles
 
 1. **Evidence, not conclusions**: Results show tool behavior under specific conditions
-2. **Changing variables changes results**: Different optimizer = different findings
-3. **Document everything**: Every experiment saved with full parameters
-4. **Reproducible**: JSON contains all info needed to reproduce
+2. **Save everything**: Parameters, images, git version, aborted tests
+3. **Reproducible**: JSON + git hash = can reproduce experiment
+4. **Document failures**: Aborted tests are valuable data points
+5. **Visual inspection**: Always save rendered images for human review
+
+---
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `src/test_results.rs` | TestResult framework implementation |
+| `examples/test_combined_densification.rs` | Example using enhanced framework |
+| `test-results/README.md` | This documentation |
+
+---
+
+*Last updated: December 6, 2025*

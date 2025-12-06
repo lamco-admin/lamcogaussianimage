@@ -30,6 +30,7 @@ pub mod gradient_peak_init;  // Gradient peak initialization (Strategy H)
 pub mod kmeans_init;  // K-means clustering initialization (Strategy D)
 pub mod slic_init;  // SLIC superpixel initialization (Strategy E)
 pub mod preprocessing_loader;  // Loads Python preprocessing outputs (placement maps)
+pub mod loss_functions;  // L1, L2, SSIM, D-SSIM, 3DGS combined loss
 
 /// Encoder v2 - Minimal prototype for Quality Gate 1
 ///
