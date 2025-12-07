@@ -1,0 +1,25 @@
+# Test Suite Configuration
+# All test scripts should load this config
+
+[paths]
+# Where to save test results (JSON + PNG)
+data_dir = "test-suite/data"
+
+# Where research findings documents live
+findings_dir = "test-suite/findings"
+
+# Where test images are located
+test_data_dir = "test-data"
+
+# Project root (for absolute path resolution)
+project_root = "."
+
+[output]
+# Use date-based folders (backward compat)
+use_date_folders = false
+
+# Save rendered images alongside JSON
+save_images = true
+
+# Image format
+image_format = "png"

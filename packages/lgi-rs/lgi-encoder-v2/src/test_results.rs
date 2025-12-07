@@ -25,10 +25,52 @@
 
 use std::fs::{self, File};
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use lgi_core::ImageBuffer;
+
+/// Test suite configuration
+#[derive(Deserialize, Debug, Clone)]
+struct TestSuiteConfig {
+    paths: PathsConfig,
+    output: OutputConfig,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+struct PathsConfig {
+    data_dir: String,
+    findings_dir: String,
+    test_data_dir: String,
+    project_root: String,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+struct OutputConfig {
+    use_date_folders: bool,
+    save_images: bool,
+    image_format: String,
+}
+
+impl TestSuiteConfig {
+    /// Load config from test-suite/config.toml (workspace-relative)
+    fn load() -> Option<Self> {
+        // Try to find config relative to workspace root
+        let manifest_dir = env!("CARGO_MANIFEST_DIR");
+        let workspace_root = Path::new(manifest_dir)
+            .ancestors()
+            .nth(2)?; // lgi-encoder-v2 -> lgi-rs -> packages -> lgi-project
+
+        let config_path = workspace_root.join("test-suite/config.toml");
+
+        if config_path.exists() {
+            let content = std::fs::read_to_string(config_path).ok()?;
+            toml::from_str(&content).ok()
+        } else {
+            None
+        }
+    }
+}
 
 /// Optimizer parameters - stores learning rates, thresholds, etc.
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -227,9 +269,28 @@ impl TestResult {
 
     /// Save aborted/failed test results (includes partial data)
     pub fn save_partial(&self, base_dir: &str) -> std::io::Result<String> {
-        let date = &self.timestamp[..10];
-        let dir = format!("{}/{}", base_dir, date);
-        fs::create_dir_all(&dir)?;
+        // Try to load config
+        let config = TestSuiteConfig::load();
+
+        // Determine output directory
+        let (output_dir, use_date_folders) = if let Some(cfg) = config {
+            let manifest_dir = env!("CARGO_MANIFEST_DIR");
+            let workspace_root = Path::new(manifest_dir).ancestors().nth(2).unwrap();
+            let data_dir = workspace_root.join(&cfg.paths.data_dir);
+            (data_dir, cfg.output.use_date_folders)
+        } else {
+            (PathBuf::from(base_dir), true)
+        };
+
+        // Apply date folder if enabled
+        let final_dir = if use_date_folders {
+            let date = &self.timestamp[..10];
+            output_dir.join(date)
+        } else {
+            output_dir
+        };
+
+        fs::create_dir_all(&final_dir)?;
 
         // Use status-based suffix for partial results
         let status_suffix = match self.status {
@@ -238,11 +299,7 @@ impl TestResult {
             _ => "partial",
         };
 
-        let filename = format!("{}/{}_{}.json",
-            dir,
-            self.base_filename(),
-            status_suffix
-        );
+        let filename = final_dir.join(format!("{}_{}.json", self.base_filename(), status_suffix));
 
         let json = serde_json::to_string_pretty(self)
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
@@ -250,7 +307,7 @@ impl TestResult {
         let mut file = File::create(&filename)?;
         file.write_all(json.as_bytes())?;
 
-        Ok(filename)
+        Ok(filename.to_str().unwrap().to_string())
     }
 
     /// Set a parameter value (convenience method)
@@ -285,11 +342,30 @@ impl TestResult {
 
     /// Save result to JSON file (without image)
     pub fn save(&self, base_dir: &str) -> std::io::Result<String> {
-        let date = &self.timestamp[..10]; // YYYY-MM-DD
-        let dir = format!("{}/{}", base_dir, date);
-        fs::create_dir_all(&dir)?;
+        // Try to load config
+        let config = TestSuiteConfig::load();
 
-        let filename = format!("{}/{}.json", dir, self.base_filename());
+        // Determine output directory
+        let (output_dir, use_date_folders) = if let Some(cfg) = config {
+            let manifest_dir = env!("CARGO_MANIFEST_DIR");
+            let workspace_root = Path::new(manifest_dir).ancestors().nth(2).unwrap();
+            let data_dir = workspace_root.join(&cfg.paths.data_dir);
+            (data_dir, cfg.output.use_date_folders)
+        } else {
+            (PathBuf::from(base_dir), true)
+        };
+
+        // Apply date folder if enabled
+        let final_dir = if use_date_folders {
+            let date = &self.timestamp[..10];
+            output_dir.join(date)
+        } else {
+            output_dir
+        };
+
+        fs::create_dir_all(&final_dir)?;
+
+        let filename = final_dir.join(format!("{}.json", self.base_filename()));
 
         let json = serde_json::to_string_pretty(self)
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
@@ -297,30 +373,54 @@ impl TestResult {
         let mut file = File::create(&filename)?;
         file.write_all(json.as_bytes())?;
 
-        Ok(filename)
+        Ok(filename.to_str().unwrap().to_string())
     }
 
     /// Save result with rendered image - both saved to same directory with matching timestamps
+    ///
+    /// Supports backward compatibility and new config-based paths.
+    /// Priority: config.toml > base_dir parameter
     pub fn save_with_image(&mut self, rendered: &ImageBuffer<f32>, base_dir: &str) -> std::io::Result<(String, String)> {
-        let date = &self.timestamp[..10]; // YYYY-MM-DD
-        let dir = format!("{}/{}", base_dir, date);
-        fs::create_dir_all(&dir)?;
+        // Try to load config
+        let config = TestSuiteConfig::load();
+
+        // Determine output directory
+        let (output_dir, use_date_folders) = if let Some(cfg) = config {
+            // Use config settings
+            let manifest_dir = env!("CARGO_MANIFEST_DIR");
+            let workspace_root = Path::new(manifest_dir).ancestors().nth(2).unwrap();
+            let data_dir = workspace_root.join(&cfg.paths.data_dir);
+            (data_dir, cfg.output.use_date_folders)
+        } else {
+            // Fallback to base_dir parameter with date folders (backward compat)
+            (PathBuf::from(base_dir), true)
+        };
+
+        // Apply date folder if enabled
+        let final_dir = if use_date_folders {
+            let date = &self.timestamp[..10]; // YYYY-MM-DD
+            output_dir.join(date)
+        } else {
+            output_dir
+        };
+
+        fs::create_dir_all(&final_dir)?;
 
         let base_name = self.base_filename();
 
         // Save rendered image
-        let image_filename = format!("{}/{}.png", dir, base_name);
-        save_image_to_path(rendered, &image_filename)?;
-        self.rendered_image_path = Some(image_filename.clone());
+        let image_filename = final_dir.join(format!("{}.png", base_name));
+        save_image_to_path(rendered, image_filename.to_str().unwrap())?;
+        self.rendered_image_path = Some(image_filename.to_str().unwrap().to_string());
 
         // Save JSON (now includes rendered_image_path)
-        let json_filename = format!("{}/{}.json", dir, base_name);
+        let json_filename = final_dir.join(format!("{}.json", base_name));
         let json = serde_json::to_string_pretty(self)
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
         let mut file = File::create(&json_filename)?;
         file.write_all(json.as_bytes())?;
 
-        Ok((json_filename, image_filename))
+        Ok((json_filename.to_str().unwrap().to_string(), image_filename.to_str().unwrap().to_string()))
     }
 }
 

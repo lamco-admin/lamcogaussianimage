@@ -1,0 +1,918 @@
+people didn’t just swap Adam out; they’ve mostly bent Adam to be more Gaussian-aware, made it sparser/fused for speed, or replaced it with second-order solvers that still sit in the same training loop.
+
+I’ll break it down by “what changed compared to vanilla Adam in 3DGS”.
+
+1. What “plain Adam” looks like in original 3DGS
+
+The original 3D Gaussian Splatting codebase uses pretty stock Adam, but with per-parameter-group learning rates and a special schedule for positions:
+
+One Adam optimizer with different lr for:
+
+positions, scales, rotations, opacity, SH features
+
+Position LR follows a delayed schedule (Plenoxels-style) that starts small, ramps up, then decays. 
+GitHub
+
+This already exploits the fact that “position” is touchier than “color”, but it’s still just first-order Adam on dense tensors.
+
+2. Sparse / fused Adam for speed (Taming-3DGS, LiteGS, etc.)
+
+A big line of work keeps Adam but makes it cheaper per step:
+
+Taming-3DGS / official 3DGS “sparse_adam”
+
+Introduces a SparseAdam variant that only updates Gaussians that actually contributed to the rendered pixels in that batch.
+
+Combines this with a fused Adam kernel (one CUDA kernel per tensor) so you don’t launch tons of tiny Adam kernels. 
+arXiv
++2
+GitHub
++2
+
+Integrated into the official repo as --optimizer_type sparse_adam, giving ~1.6× training speed-up at basically the same visual quality. 
+radiancefields.com
+
+Conceptually: same Adam math, but sparse parameter updates + better kernel packing → faster iterations without changing the loss or densification logic.
+
+3. “Better Optimized Gaussian Splatting” (BOGausS) – Adam that knows about geometry
+
+BOGausS explicitly modifies Adam itself to be more aware of Gaussian geometry and state. Key tweaks: 
+Eusipco 2025
++1
+
+Precision-aware step scaling (∆θ)
+
+They estimate a confidence/precision per Gaussian (from camera geometry), and use that as a scaling factor ∆θ in the Adam update for positions and sizes.
+
+Intuition: if a Gaussian is poorly constrained by views, don’t let Adam fling it around; if it’s well-constrained, you can step more aggressively.
+
+Linear parameterization for sizes (σ instead of log σ)
+
+Original 3DGS uses log-σ to let sizes grow/shrink exponentially; this can create exploding “needle” Gaussians.
+
+BOGausS moves to linear σ, but couples it with precision-aware scaling so it’s still stable.
+
+Unbiased Sparse Adam with per-Gaussian “time”
+
+When you do sparse updates, some Gaussians don’t get gradients every step, so the usual Adam bias-correction (based on global step t) becomes wrong.
+
+BOGausS keeps a separate step counter per Gaussian, and only increments it when that Gaussian is updated, which restores the correct bias-correction for the moving averages.
+
+State inheritance after splitting
+
+Instead of resetting optimizer state when a Gaussian is split, they partially copy/scale the parent’s Adam moments (m, v) and time t into the children.
+
+That avoids the “newborn Gaussians with no history” problem and improves convergence/stability after densification.
+
+Rate–distortion-style densification/pruning
+
+They also change which Gaussians are split/pruned using PSNR-based criteria tied to each Gaussian’s contribution to error. This isn’t Adam per se, but it radically changes the optimization landscape.
+
+Result: 0.5–1 dB PSNR improvement and smoother behavior, especially in difficult scenes, at similar or lower cost compared to vanilla 3DGS with standard Adam. 
+Eusipco 2025
+
+4. Second-order replacements for Adam (LM / Gauss–Newton style)
+
+Another branch says: Adam is fine, but we can do better if we approximate curvature.
+
+3DGS-LM (ICCV 2025) – LM instead of Adam
+
+3DGS-LM literally replaces Adam with a custom Levenberg–Marquardt optimizer:
+
+Uses LM with a custom GPU Jacobian-vector product cache to compute Gauss–Newton steps on the Gaussian parameters.
+
+Still uses the same differentiable rasterizer and densification logic as 3DGS. 
+arXiv
+
+Reports ≈20–30% shorter training time vs Adam (and vs Taming-3DGS) at similar PSNR/SSIM/LPIPS. 
+ChatPaper
+
+LM-IS: LM + importance sampling (Pehlivan et al. 2025)
+
+Even more aggressive: a matrix-free LM with importance sampling: 
+arXiv
+
+LM solved via GPU preconditioned conjugate gradient with Jacobian–vector products (no full Jacobian stored).
+
+View clustering to choose diverse camera batches → better curvature estimates.
+
+Pixel-wise importance sampling (samples pixels with higher loss more often).
+
+A learning-rate heuristic that constrains maximum color change per step, instead of line search.
+
+They benchmark against Adam, RMSProp, and SGD+momentum and show:
+
+Similar or slightly better PSNR/SSIM than Adam,
+
+Up to ≈6× faster convergence in some settings. 
+arXiv
+
+So here the “adaptation” is: swap first-order Adam for a second-order Gauss–Newton/LM solver that’s engineered to be GPU-friendly.
+
+5. Structural regularization that changes how Adam behaves
+
+Not strictly new optimizers, but methods that change the gradient statistics Adam sees:
+
+DropGaussian (structural dropout on Gaussians)
+
+During training, randomly drop a fraction of Gaussians (like dropout on primitives), especially in sparse-view regimes. 
+arXiv
+
+This:
+
+avoids overfitting a few near-camera Gaussians,
+
+boosts gradients for far/poorly-seen Gaussians,
+
+improves sparse-view PSNR with almost no extra compute.
+
+Adam is still the optimizer, but now it’s working on a stochastically thinned set of primitives, which acts like a structural regularizer.
+
+Depth / spectral / shape regularization
+
+Methods like Depth-regularized 3DGS, Spectral-GS, shape-selective splatting, etc., add losses or splitting criteria that are sensitive to:
+
+scene depth / geometry,
+
+spectral entropy of the covariance,
+
+Gaussian shape. 
+arXiv
++1
+
+Again, Adam itself isn’t changed, but the loss landscape and densification rules are, which indirectly fixes issues like needles, floating artifacts, and overfitting.
+
+6. Feed-forward / hybrid setups that reduce reliance on long Adam runs
+
+There’s also a trend to front-load most of the work into a network and use Adam as a short fine-tuning stage:
+
+pixelSplat, MVSplat, FreeSplat and similar models directly predict Gaussian parameters from images via a CNN, then optionally fine-tune with a few optimization steps. 
+arXiv
+
+From an optimization perspective, this is like replacing “30k Adam iterations” with “a forward pass + 2k Adam iterations”, so Adam’s role becomes light fine-tuner instead of heavy workhorse.
+
+7. What this means if you’re designing your own optimizer
+
+If you want to riff on the Adam-in-GS story, the patterns that have actually worked in the literature are:
+
+Geometry-aware scaling
+
+Scale steps using some notion of confidence/precision per Gaussian (BOGausS style).
+
+Treat position/scale differently from color/SH, possibly with separate LRs and schedules.
+
+Sparse + fused updates
+
+Only touch Gaussians that contributed to the batch.
+
+Use fused kernels so Adam isn’t your bottleneck.
+
+Stateful densification
+
+Don’t throw away optimizer state on split/prune—inherit or reuse it.
+
+Curvature where it matters
+
+Consider an LM / Gauss–Newton step (even approximate) when the primitive count is moderate.
+
+Use importance sampling and view clustering to keep second-order methods tractable.
+
+Structural regularizers, not just L2
+
+Randomly disable subsets of Gaussians (DropGaussian-style),
+
+Add depth/shape/spectral regularizers that tame “needle” and “floating” artifacts.
+
+If you tell me what you’re optimizing (static scenes vs 4D, sparse views vs dense, quality vs speed trade-off), I can sketch a concrete “Adam-but-better” recipe tailored to your use case.
+
+You said:
+im trying to build an image (2d) codec 
+ChatGPT said:
+Thought for 24s
+
+Nice, that context helps a lot — a 2D Gaussian-based codec is a bit different from reconstruction for its own sake, because you care about rate–distortion, not just “fit the image”.
+
+Let me give you a concrete picture of what “Adam, but adapted” could look like for a 2D Gaussian codec.
+
+1. Where optimization lives in a 2D codec
+
+For a Gaussian-image codec, you basically have:
+
+Encoder (expensive is okay):
+Given an image → find a set of Gaussians + quantized parameters that minimize
+
+𝐿
+=
+𝐷
+(
+image
+,
+image
+^
+)
++
+𝜆
+𝑅
+(
+bitstream
+)
+L=D(image,
+image
+^
+	​
+
+)+λR(bitstream)
+
+Decoder (must be cheap):
+Take the bitstream → decode Gaussians → rasterize.
+
+So the main place for Adam (or friends) is in the encoder’s fitting loop for each image (possibly with some global learned priors).
+
+2. Representation first: what you’re actually optimizing
+
+A simple but powerful 2D Gaussian primitive:
+
+Position: 
+𝜇
+=
+(
+𝑥
+,
+𝑦
+)
+μ=(x,y) in normalized coords (e.g. [0,1] × [0,1])
+
+Shape:
+
+Prefer Cholesky or eigen parameterization of the 2×2 covariance:
+
+scale along major/minor axes: 
+𝜎
+1
+,
+𝜎
+2
+σ
+1
+	​
+
+,σ
+2
+	​
+
+ (often log-param’d)
+
+orientation: θ
+
+Amplitude/color:
+
+Either per-channel intensity 
+𝑐
+∈
+𝑅
+3
+c∈R
+3
+ (RGB)
+
+Or a scalar alpha weight times a base color from some palette / basis
+
+Per Gaussian you then have something like:
+
+𝜃
+𝑖
+=
+{
+𝜇
+𝑖
+,
+𝜎
+1
+𝑖
+,
+𝜎
+2
+𝑖
+,
+𝜃
+𝑖
+,
+𝑐
+𝑖
+}
+θ
+i
+	​
+
+={μ
+i
+	​
+
+,σ
+1i
+	​
+
+,σ
+2i
+	​
+
+,θ
+i
+	​
+
+,c
+i
+	​
+
+}
+
+Render with a differentiable splat kernel onto the pixel grid to get 
+𝐼
+^
+I
+^
+.
+
+3. Loss: make it codec-aware (Adam will just follow)
+
+Instead of pure MSE, you want a rate–distortion loss:
+
+𝐿
+=
+𝐷
+(
+𝐼
+,
+𝐼
+^
+(
+{
+𝜃
+𝑖
+}
+)
+)
++
+𝜆
+ 
+𝑅
+(
+{
+𝜃
+𝑖
+}
+)
+L=D(I,
+I
+^
+({θ
+i
+	​
+
+}))+λR({θ
+i
+	​
+
+})
+
+D: distortion term
+
+Start with MSE or SSIM; later, maybe a perceptual term on top.
+
+R: bitrate surrogate
+
+Approximate as
+
+#Gaussians × cost_per_gaussian +
+
+sum of −log p(q(\theta_i)) for quantized parameters given an entropy model
+
+Or more cheaply: hand-designed penalties like:
+
+small penalty per Gaussian,
+
+extra penalty for large spatial coverage (big σ) or high dynamic range colors.
+
+Once you define L and make the renderer differentiable, you can backprop to all Gaussian params and feed those into Adam.
+
+4. Adam, but adapted to your 2D setting
+
+Here’s a very concrete recipe that folds in the ideas from the 3D literature, but tuned for a 2D codec:
+
+4.1 Parameter grouping & learning rates
+
+Use one optimizer, multiple param groups:
+
+Positions 
+(
+𝑥
+,
+𝑦
+)
+(x,y)
+
+Lower LR (e.g. 0.01)
+
+Optional position schedule: start a bit higher then decay once PSNR stabilizes.
+
+Shape (σ₁, σ₂, θ)
+
+Separate LR, also small (0.01 or less)
+
+Strong regularization on extreme anisotropy (to avoid crazy “needles” unless you deliberately want them for edges).
+
+Colors/intensities 
+𝑐
+c
+
+Higher LR (e.g. 0.1) because these are well-behaved, almost linear.
+
+This is the 2D analogue of “geometry vs color” LRs that 3DGS uses.
+
+4.2 Confidence / precision–aware step scaling (2D version)
+
+Define a confidence for each Gaussian based on what it “controls”:
+
+For each Gaussian i, maintain:
+
+𝑁
+𝑖
+N
+i
+	​
+
+: number of pixels where it has significant weight (e.g. contribution > τ),
+
+or the sum of its softmax weights over pixels,
+
+or the average local gradient magnitude under that Gaussian footprint.
+
+Then scale the update step by something like:
+
+Δ
+𝜃
+𝑖
+=
+−
+𝛼
+ 
+𝑠
+𝑖
+ 
+𝑚
+^
+𝑖
+𝑣
+^
+𝑖
++
+𝜖
+Δθ
+i
+	​
+
+=−αs
+i
+	​
+
+v
+^
+i
+	​
+
+	​
+
++ϵ
+m
+^
+i
+	​
+
+	​
+
+
+where 
+𝑠
+𝑖
+s
+i
+	​
+
+ depends on your confidence:
+
+High confidence (Gaussian is clearly needed and well-supported by data): 
+𝑠
+𝑖
+≈
+1
+s
+i
+	​
+
+≈1
+
+Low confidence (rarely used, or only covering flat regions): 
+𝑠
+𝑖
+<
+1
+s
+i
+	​
+
+<1
+
+This is the 2D analogue of BOGausS “precision-aware” Adam: Gaussians that matter get bolder updates; uncertain ones move slowly instead of exploding.
+
+4.3 Sparse updates + per-Gaussian “time”
+
+For speed, you likely don’t want to recompute gradients for all Gaussians every iteration:
+
+For each iteration:
+
+Compute an error map 
+𝐸
+=
+∣
+𝐼
+−
+𝐼
+^
+∣
+E=∣I−
+I
+^
+∣.
+
+Pick the top-K pixels / tiles by error.
+
+Only update Gaussians that significantly contribute to those selected regions.
+
+Then:
+
+Maintain per-Gaussian Adam state: 
+(
+𝑚
+𝑖
+,
+𝑣
+𝑖
+,
+𝑡
+𝑖
+)
+(m
+i
+	​
+
+,v
+i
+	​
+
+,t
+i
+	​
+
+).
+
+Increment 
+𝑡
+𝑖
+t
+i
+	​
+
+ only when Gaussian i actually gets an update.
+
+Use 
+𝑡
+𝑖
+t
+i
+	​
+
+ for bias correction:
+
+𝑚
+^
+𝑖
+=
+𝑚
+𝑖
+1
+−
+𝛽
+1
+𝑡
+𝑖
+,
+𝑣
+^
+𝑖
+=
+𝑣
+𝑖
+1
+−
+𝛽
+2
+𝑡
+𝑖
+m
+^
+i
+	​
+
+=
+1−β
+1
+t
+i
+	​
+
+	​
+
+m
+i
+	​
+
+	​
+
+,
+v
+^
+i
+	​
+
+=
+1−β
+2
+t
+i
+	​
+
+	​
+
+v
+i
+	​
+
+	​
+
+
+This fixes the bias issue when updates are sparse and irregular.
+
+4.4 Splitting / merging with state inheritance
+
+You almost certainly want densification:
+
+Start with a small set of Gaussians.
+
+When a Gaussian’s covered region still has high residual, split it into 2–4 children (e.g. offset their means a bit, shrink σ).
+
+When you split:
+
+Copy or scaled-copy the parent’s optimizer state:
+
+𝑚
+child
+←
+𝑚
+parent
+/
+2
+m
+child
+	​
+
+←m
+parent
+	​
+
+/2 (or similar)
+
+𝑣
+child
+←
+𝑣
+parent
+v
+child
+	​
+
+←v
+parent
+	​
+
+
+𝑡
+child
+←
+𝑡
+parent
+t
+child
+	​
+
+←t
+parent
+	​
+
+
+So children don’t “start from scratch” in Adam — they inherit history. This helps convergence a lot when you have iterative refinement.
+
+Similarly, for merging (two very similar Gaussians):
+
+Combine parameters (e.g. weighted average)
+
+Combine optimizer state (e.g. weight m and v by contribution)
+
+This keeps the optimizer smooth even as the primitive set changes.
+
+4.5 Rate-aware pruning during optimization
+
+Tie pruning decisions directly to your RD objective:
+
+For each Gaussian i, approximate its RD gain:
+
+Compute L with and without i (or with its weight set to zero) on a small pixel subset.
+
+Estimate 
+Δ
+𝐿
+𝑖
+/
+Δ
+𝑅
+𝑖
+ΔL
+i
+	​
+
+/ΔR
+i
+	​
+
+.
+
+If removing i improves or barely hurts L once rate is included → mark for pruning.
+
+You can integrate pruning into the same loop:
+
+Every N iterations, run a cheap RD check on a subset of Gaussians and prune those with worst “bang for bit”.
+
+Adam doesn’t change here, but the effective landscape is now properly rate–distortion oriented.
+
+5. Hybrid optimization tricks that work well in 2D
+
+Because 2D is simpler than 3D, you can also do some hybrid things that reduce Adam’s workload:
+
+5.1 Closed-form color updates
+
+Given positions + shapes fixed, the rendering is linear in colors:
+
+𝐼
+^
+(
+𝑥
+,
+𝑦
+)
+=
+∑
+𝑖
+𝑤
+𝑖
+(
+𝑥
+,
+𝑦
+)
+ 
+𝑐
+𝑖
+I
+^
+(x,y)=
+i
+∑
+	​
+
+w
+i
+	​
+
+(x,y)c
+i
+	​
+
+
+For a fixed set of per-pixel weights 
+𝑤
+𝑖
+w
+i
+	​
+
+, the best colors 
+𝑐
+𝑖
+c
+i
+	​
+
+ (in least-squares sense) solve a linear system:
+
+min
+⁡
+𝑐
+∥
+𝐼
+−
+𝑊
+𝑐
+∥
+2
+c
+min
+	​
+
+∥I−Wc∥
+2
+
+So you can:
+
+Use Adam only on positions + shapes.
+
+Every M iterations, solve for colors in closed form (or with a few CG steps).
+
+This is like doing a mini Gauss–Newton step in the “color” subspace and saves a ton of iterations.
+
+5.2 Multi-resolution / residual fitting
+
+For stability and compression:
+
+Fit Gaussians on a downsampled version of the image first (low-freq).
+
+Freeze those, render back to full resolution, compute residual 
+𝑅
+=
+𝐼
+−
+𝐼
+^
+R=I−
+I
+^
+.
+
+Fit additional Gaussians on the residual only.
+
+Each stage can use the same Adam + tricks, but the optimization becomes easier and more structured (and you can code separate “layers” in the bitstream).
+
+6. A simple optimizer loop template
+
+Very roughly, something like this for your encoder:
+
+params = init_gaussians(image)    # few, large ones
+adam_state = init_adam_state(params)
+
+for iter in range(T):
+    # 1) Render and compute loss
+    recon = render_gaussians(params)
+    distortion = mse(image, recon)   # or SSIM
+    rate = rate_proxy(params)        # per-gaussian cost + quantization model
+    loss = distortion + lambda_rd * rate
+
+    # 2) Backprop to get gradients
+    loss.backward()
+    grads = get_gradients(params)
+
+    # 3) Confidence / sparse selection
+    error_map = (image - recon).abs()
+    active_pixels = topk_pixels(error_map)
+    active_gaussians = gaussians_touching(active_pixels)
+
+    # 4) Adam update *only* for active gaussians,
+    #    with per-gaussian time and confidence scaling
+    for g in active_gaussians:
+        adam_state[g].t += 1
+        adam_state[g].m = beta1 * adam_state[g].m + (1 - beta1) * grads[g]
+        adam_state[g].v = beta2 * adam_state[g].v + (1 - beta2) * grads[g]**2
+
+        m_hat = adam_state[g].m / (1 - beta1**adam_state[g].t)
+        v_hat = adam_state[g].v / (1 - beta2**adam_state[g].t)
+
+        s = confidence_scale(g)   # based on support / gradient energy
+        params[g] -= lr_group[g] * s * m_hat / (v_hat.sqrt() + eps)
+
+    # 5) Periodic: split, merge, prune, and re-solve colors
+    if iter % split_every == 0:
+        split_some_gaussians(params, adam_state, error_map)
+    if iter % prune_every == 0:
+        prune_bad_gaussians(params, adam_state, lambda_rd)
+    if iter % color_refit_every == 0:
+        refit_colors_closed_form(params, image)
+
+
+Obviously you’d implement this more efficiently, but algorithmically this is the shape of a “Gaussian-aware Adam” for 2D codec fitting.
