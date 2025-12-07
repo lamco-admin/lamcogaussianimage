@@ -17,6 +17,7 @@ pub mod renderer_v2;
 pub mod renderer_gpu;  // GPU-accelerated renderer
 pub mod optimizer_v2;
 pub mod error_driven;
+pub mod error_driven_adam;  // Adam-based error-driven encoder (improved)
 pub mod better_color_init;
 pub mod text_detection;
 pub mod renderer_v3_textured;  // Production-grade textured renderer

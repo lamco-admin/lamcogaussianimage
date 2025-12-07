@@ -3170,6 +3170,7 @@ name = "lgi-encoder-v2"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bytemuck",
  "env_logger",
  "image",
  "imageproc",
@@ -3186,6 +3187,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "wgpu",
  "zstd",
 ]
 

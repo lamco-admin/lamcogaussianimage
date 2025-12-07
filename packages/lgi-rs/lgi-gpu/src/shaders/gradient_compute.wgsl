@@ -4,24 +4,35 @@
 // Computes full gradients for all Gaussian parameters using backpropagation
 // This accelerates training by 100-1000× compared to CPU
 
+// Gaussian struct - must match ShaderGaussian in Rust exactly (48 bytes)
+// Using separate f32 fields to avoid vec4 16-byte alignment issues
 struct Gaussian {
-    position: vec2<f32>,
-    scale_x: f32,
-    scale_y: f32,
-    rotation: f32,
-    color: vec4<f32>,
-    opacity: f32,
-    _padding: vec2<u32>,
+    position: vec2<f32>,      // 8 bytes @ offset 0
+    scale_x: f32,             // 4 bytes @ offset 8
+    scale_y: f32,             // 4 bytes @ offset 12
+    rotation: f32,            // 4 bytes @ offset 16
+    color_r: f32,             // 4 bytes @ offset 20
+    color_g: f32,             // 4 bytes @ offset 24
+    color_b: f32,             // 4 bytes @ offset 28
+    color_a: f32,             // 4 bytes @ offset 32
+    opacity: f32,             // 4 bytes @ offset 36
+    _padding: vec2<u32>,      // 8 bytes @ offset 40
 }
 
+// Gradient struct - must match GpuGradient in Rust exactly (48 bytes)
+// CRITICAL: Array stride in WGSL is padded to alignment of largest field (vec2 = 8 bytes)
+// So we need explicit padding to 48 bytes
 struct GaussianGradient {
-    d_position: vec2<f32>,
-    d_scale_x: f32,
-    d_scale_y: f32,
-    d_rotation: f32,
-    d_color: vec4<f32>,
-    d_opacity: f32,
-    _padding: f32,
+    d_position: vec2<f32>,    // 8 bytes @ offset 0
+    d_scale_x: f32,           // 4 bytes @ offset 8
+    d_scale_y: f32,           // 4 bytes @ offset 12
+    d_rotation: f32,          // 4 bytes @ offset 16
+    d_color_r: f32,           // 4 bytes @ offset 20
+    d_color_g: f32,           // 4 bytes @ offset 24
+    d_color_b: f32,           // 4 bytes @ offset 28
+    d_color_a: f32,           // 4 bytes @ offset 32
+    d_opacity: f32,           // 4 bytes @ offset 36
+    _padding: vec2<f32>,      // 8 bytes @ offset 40 (48 bytes total)
 }
 
 @group(0) @binding(0) var<storage, read> gaussians: array<Gaussian>;
@@ -161,22 +172,25 @@ fn compute_gradients_main(
 
     let gaussian = gaussians[gaussian_idx];
 
-    // Initialize gradient accumulator
+    // Initialize gradient accumulator (all zeros)
     var grad = GaussianGradient(
-        vec2<f32>(0.0),
-        0.0, 0.0, 0.0,
-        vec4<f32>(0.0),
-        0.0, 0.0
+        vec2<f32>(0.0),           // d_position
+        0.0, 0.0, 0.0,            // d_scale_x, d_scale_y, d_rotation
+        0.0, 0.0, 0.0, 0.0,       // d_color_r, d_color_g, d_color_b, d_color_a
+        0.0,                      // d_opacity
+        vec2<f32>(0.0)            // _padding (48 bytes total)
     );
 
-    // Compute bounding box (3.5σ cutoff)
-    let sigma_x = gaussian.scale_x * 3.5;
-    let sigma_y = gaussian.scale_y * 3.5;
+    // Compute bounding box - MUST match CPU's dist_sq > 0.1 cutoff
+    // CPU iterates all pixels and skips if dist_sq > 0.1
+    // sqrt(0.1) ≈ 0.316, so we need a box of ±0.316 in normalized coords
+    // This is larger than 3.5σ for small Gaussians and ensures we don't miss pixels
+    let cutoff_dist = 0.316;  // sqrt(0.1) - matches CPU cutoff
 
-    let x_min_f = max(0.0, (gaussian.position.x - sigma_x) * f32(params.width));
-    let y_min_f = max(0.0, (gaussian.position.y - sigma_y) * f32(params.height));
-    let x_max_f = min(f32(params.width - 1u), (gaussian.position.x + sigma_x) * f32(params.width));
-    let y_max_f = min(f32(params.height - 1u), (gaussian.position.y + sigma_y) * f32(params.height));
+    let x_min_f = max(0.0, (gaussian.position.x - cutoff_dist) * f32(params.width));
+    let y_min_f = max(0.0, (gaussian.position.y - cutoff_dist) * f32(params.height));
+    let x_max_f = min(f32(params.width - 1u), (gaussian.position.x + cutoff_dist) * f32(params.width));
+    let y_max_f = min(f32(params.height - 1u), (gaussian.position.y + cutoff_dist) * f32(params.height));
 
     let x_min = u32(x_min_f);
     let y_min = u32(y_min_f);
@@ -194,12 +208,26 @@ fn compute_gradients_main(
                 f32(py) / f32(params.height)
             );
 
-            // Evaluate Gaussian at this pixel
-            let gaussian_value = evaluate_gaussian(gaussian, pos);
-            let weight = gaussian_value * gaussian.opacity;
+            // CRITICAL: Use simplified ISOTROPIC Gaussian formula (matching CPU adam_optimizer.rs)
+            // The CPU uses: exp(-0.5 * dist_sq / (scale_x * scale_y))
+            // NOT the full anisotropic formula with rotation
+            let dx = pos.x - gaussian.position.x;
+            let dy = pos.y - gaussian.position.y;
+            let dist_sq = dx * dx + dy * dy;
 
-            // Skip if contribution is negligible
-            if (weight < 0.00001) {
+            // CPU uses dist_sq > 0.1 as cutoff
+            if (dist_sq > 0.1) {
+                continue;
+            }
+
+            let scale_product = max(gaussian.scale_x * gaussian.scale_y, 1e-6);
+            // CRITICAL FIX: weight = gaussian_value ONLY (NO opacity) - matches CPU exactly
+            // CPU line 420: let weight = (-0.5 * dist_sq / scale_product).exp();
+            let gaussian_value = exp(-0.5 * dist_sq / scale_product);
+            let weight = gaussian_value;  // Same as CPU (no opacity multiplied)
+
+            // Skip if contribution is negligible (CPU uses 1e-6)
+            if (weight < 0.000001) {
                 continue;
             }
 
@@ -208,27 +236,51 @@ fn compute_gradients_main(
             let target_pixel = target_image[pixel_idx];
             let img_grad = compute_pixel_gradient(rendered, target_pixel);
 
-            // Chain rule: dL/dθ = (dL/dI) · (dI/dθ)
+            // ====== SIMPLIFIED GRADIENTS (matching CPU adam_optimizer.rs) ======
+            // The CPU uses a simplified approximation that's more stable for optimization
 
             // Color gradient: dI/dcolor = weight (for each channel)
-            grad.d_color += img_grad * weight;
+            grad.d_color_r += img_grad.r * weight;
+            grad.d_color_g += img_grad.g * weight;
+            grad.d_color_b += img_grad.b * weight;
+            grad.d_color_a += img_grad.a * weight;
 
-            // Opacity gradient: dI/dopacity = color * gaussian_value
-            grad.d_opacity += dot(img_grad.rgb, gaussian.color.rgb) * gaussian_value;
+            // Opacity gradient: DISABLED to match CPU
+            // CPU adam_optimizer.rs doesn't compute opacity gradient (grads[i].opacity = 0 always)
+            // GPU must also skip opacity to match CPU behavior
+            // grad.d_opacity += dot(img_grad.rgb, g_color) * gaussian_value;
 
-            // Spatial gradients
-            let pos_deriv = compute_position_derivatives(gaussian, pos, gaussian_value);
-            let spatial_grad = dot(img_grad.rgb, gaussian.color.rgb) * gaussian.opacity;
-            grad.d_position += pos_deriv * spatial_grad;
+            // Error weighted by color contribution
+            let g_color = vec3<f32>(gaussian.color_r, gaussian.color_g, gaussian.color_b);
+            let error_weighted = dot(img_grad.rgb, g_color);
 
-            let scale_deriv = compute_scale_derivatives(gaussian, pos, gaussian_value);
-            grad.d_scale_x += scale_deriv.x * spatial_grad;
-            grad.d_scale_y += scale_deriv.y * spatial_grad;
+            // Position gradient (simplified): dL/dμ = error_weighted * weight * (x - μ)
+            // dx, dy, dist_sq already computed above for isotropic Gaussian
+            grad.d_position.x += error_weighted * weight * dx;
+            grad.d_position.y += error_weighted * weight * dy;
 
-            let rotation_deriv = compute_rotation_derivative(gaussian, pos, gaussian_value);
-            grad.d_rotation += rotation_deriv * spatial_grad;
+            // Scale gradient (simplified): dL/dσ = error_weighted * weight * dist² / σ²
+            let scale_x_sq = gaussian.scale_x * gaussian.scale_x;
+            let scale_y_sq = gaussian.scale_y * gaussian.scale_y;
+            grad.d_scale_x += error_weighted * weight * dist_sq / max(scale_x_sq, 1e-6);
+            grad.d_scale_y += error_weighted * weight * dist_sq / max(scale_y_sq, 1e-6);
+
+            // Rotation gradient: skip for now (CPU doesn't compute it)
+            // grad.d_rotation stays at 0
         }
     }
+
+    // Normalize gradients by pixel count (CRITICAL - matches CPU implementation)
+    let pixel_count = f32(params.width * params.height);
+    grad.d_position /= pixel_count;
+    grad.d_color_r /= pixel_count;
+    grad.d_color_g /= pixel_count;
+    grad.d_color_b /= pixel_count;
+    grad.d_color_a /= pixel_count;
+    grad.d_scale_x /= pixel_count;
+    grad.d_scale_y /= pixel_count;
+    grad.d_rotation /= pixel_count;
+    grad.d_opacity /= pixel_count;
 
     // Store computed gradients
     gradients[gaussian_idx] = grad;

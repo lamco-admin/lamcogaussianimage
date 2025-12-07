@@ -48,6 +48,10 @@ impl LBFGS {
     /// Compute search direction using L-BFGS two-loop recursion
     ///
     /// Given current gradient, returns search direction p
+    ///
+    /// NOTE: This implementation includes is_finite() guards on ρ values
+    /// and safeguards against divide-by-zero in γ calculation to match
+    /// GPU L-BFGS behavior for consistency.
     pub fn compute_direction(&self, gradient: &[f32]) -> Vec<f32> {
         let n = gradient.len();
         let m = self.s_history.len();
@@ -64,18 +68,24 @@ impl LBFGS {
         // First loop (backward)
         for i in (0..m).rev() {
             let rho_i = 1.0 / dot_product(&self.y_history[i], &self.s_history[i]);
-            alpha[i] = rho_i * dot_product(&self.s_history[i], &q);
-            for j in 0..n {
-                q[j] -= alpha[i] * self.y_history[i][j];
+            // CONSISTENCY FIX: Skip non-finite ρ values (matches GPU behavior)
+            if rho_i.is_finite() {
+                alpha[i] = rho_i * dot_product(&self.s_history[i], &q);
+                for j in 0..n {
+                    q[j] -= alpha[i] * self.y_history[i][j];
+                }
             }
         }
 
         // Initial Hessian approximation: H_0 = γI
         // γ = (s_{k-1}^T y_{k-1}) / (y_{k-1}^T y_{k-1})
+        // CONSISTENCY FIX: Safeguard against divide-by-zero (matches GPU behavior)
         let gamma = {
             let last_s = &self.s_history[m - 1];
             let last_y = &self.y_history[m - 1];
-            dot_product(last_s, last_y) / dot_product(last_y, last_y)
+            let sy = dot_product(last_s, last_y);
+            let yy = dot_product(last_y, last_y);
+            if yy > 1e-10 { sy / yy } else { 1.0 }
         };
 
         let mut r: Vec<f32> = q.iter().map(|&qi| gamma * qi).collect();
@@ -83,9 +93,12 @@ impl LBFGS {
         // Second loop (forward)
         for i in 0..m {
             let rho_i = 1.0 / dot_product(&self.y_history[i], &self.s_history[i]);
-            let beta = rho_i * dot_product(&self.y_history[i], &r);
-            for j in 0..n {
-                r[j] += self.s_history[i][j] * (alpha[i] - beta);
+            // CONSISTENCY FIX: Skip non-finite ρ values (matches GPU behavior)
+            if rho_i.is_finite() {
+                let beta = rho_i * dot_product(&self.y_history[i], &r);
+                for j in 0..n {
+                    r[j] += self.s_history[i][j] * (alpha[i] - beta);
+                }
             }
         }
 

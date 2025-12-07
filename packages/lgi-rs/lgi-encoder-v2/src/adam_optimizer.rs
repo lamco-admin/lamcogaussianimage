@@ -112,6 +112,11 @@ impl AdamOptimizer {
         let mut best_gaussians = gaussians.to_vec();  // Track best state
         let mut best_iteration = 0;
 
+        // Debug: compute initial loss
+        let initial_rendered = RendererV2::render(gaussians, target.width, target.height);
+        let initial_loss = self.compute_loss(&initial_rendered, target);
+        println!("  CPU Adam initial loss (before opt): {:.6}", initial_loss);
+
         for t in 1..=self.max_iterations {
             let rendered = RendererV2::render(gaussians, target.width, target.height);
             let loss = self.compute_loss(&rendered, target);

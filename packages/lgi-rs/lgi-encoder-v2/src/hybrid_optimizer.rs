@@ -3,7 +3,11 @@
 //! Based on 3DGS-LM research (ICCV 2025): Adam for warm-start, L-BFGS for refinement.
 //! Key insight: L-BFGS from scratch provides NO benefit; hybrid is essential.
 //!
-//! Default strategy: 100 Adam iterations, then 50 L-BFGS iterations.
+//! Default strategy: 30 Adam iterations, then 20 L-BFGS iterations.
+//!
+//! **IMPORTANT**: Uses analytical gradients (not finite differences) for L-BFGS phase
+//! to achieve practical performance. Finite differences would require O(2×7×n_gaussians)
+//! renders per gradient computation, which is intractable.
 
 use lgi_core::{ImageBuffer, lbfgs::LBFGS};
 use lgi_math::{gaussian::Gaussian2D, parameterization::Euler, vec::Vector2, color::Color4};
@@ -25,8 +29,8 @@ pub struct HybridConfig {
 impl Default for HybridConfig {
     fn default() -> Self {
         Self {
-            adam_iterations: 100,
-            lbfgs_iterations: 50,
+            adam_iterations: 30,
+            lbfgs_iterations: 20,
             lbfgs_history: 10,
             adam_lr: LearningRates::default(),
         }
@@ -114,42 +118,103 @@ impl HybridOptimizer {
         // Track best state
         let mut best_loss = f32::INFINITY;
         let mut best_x = x.clone();
-        let mut best_iteration = 0;
 
-        // Loss function closure
-        let loss_fn = |params: &[f32]| -> f32 {
-            let temp_gaussians = self.params_to_gaussians(params, gaussians);
-            let rendered = RendererV2::render(&temp_gaussians, target.width, target.height);
+        // We need to track iterations manually since we use analytical gradients
+        // which require converting params back to Gaussians first
+        let mut lbfgs = LBFGS::new(self.config.lbfgs_history);
+
+        // Manual optimization loop to use analytical gradients
+        let mut iteration = 0;
+        let mut gradient = {
+            let temp = self.params_to_gaussians(&x, gaussians);
+            self.compute_gradient_analytical(&temp, target)
+        };
+        let mut f_x = {
+            let temp = self.params_to_gaussians(&x, gaussians);
+            let rendered = RendererV2::render(&temp, target.width, target.height);
             self.compute_loss(&rendered, target)
         };
 
-        // Gradient function closure (finite differences for now)
-        let grad_fn = |params: &[f32]| -> Vec<f32> {
-            self.compute_gradient_fd(params, gaussians, target)
-        };
+        println!("  L-BFGS iter 0: loss = {:.6}", f_x);
+        best_loss = f_x;
+        best_x = x.clone();
 
-        // Run L-BFGS
-        let mut lbfgs = LBFGS::new(self.config.lbfgs_history);
+        while iteration < self.config.lbfgs_iterations {
+            // Check convergence
+            let grad_norm: f32 = gradient.iter().map(|&g| g * g).sum::<f32>().sqrt();
+            if grad_norm < 1e-7 {
+                println!("  L-BFGS converged (grad_norm = {:.2e})", grad_norm);
+                break;
+            }
 
-        let (final_x, final_loss, iterations) = lbfgs.optimize(
-            x,
-            loss_fn,
-            grad_fn,
-            self.config.lbfgs_iterations,
-            1e-7,  // tolerance
-        );
+            // Compute search direction
+            let direction = lbfgs.compute_direction(&gradient);
 
-        // Track best (L-BFGS should be monotonically improving, but just in case)
-        if final_loss < best_loss {
-            best_loss = final_loss;
-            best_x = final_x.clone();
-            best_iteration = iterations;
+            // Line search
+            let alpha = {
+                let mut alpha = 1.0;
+                let directional_derivative: f32 = gradient.iter()
+                    .zip(direction.iter())
+                    .map(|(&g, &d)| g * d)
+                    .sum();
+
+                if directional_derivative >= 0.0 {
+                    alpha = 1e-6;  // Not a descent direction, use small step
+                } else {
+                    // Backtracking line search with Armijo condition
+                    for _ in 0..10 {
+                        let x_new: Vec<f32> = x.iter()
+                            .zip(direction.iter())
+                            .map(|(&xi, &di)| xi + alpha * di)
+                            .collect();
+
+                        let temp = self.params_to_gaussians(&x_new, gaussians);
+                        let rendered = RendererV2::render(&temp, target.width, target.height);
+                        let f_new = self.compute_loss(&rendered, target);
+
+                        if f_new <= f_x + 1e-4 * alpha * directional_derivative {
+                            break;
+                        }
+                        alpha *= 0.5;
+                    }
+                }
+                alpha
+            };
+
+            // Take step
+            let x_prev = x.clone();
+            let grad_prev = gradient.clone();
+
+            for i in 0..x.len() {
+                x[i] += alpha * direction[i];
+            }
+
+            // Compute new function value and gradient
+            let temp = self.params_to_gaussians(&x, gaussians);
+            gradient = self.compute_gradient_analytical(&temp, target);
+            let rendered = RendererV2::render(&temp, target.width, target.height);
+            f_x = self.compute_loss(&rendered, target);
+
+            // Update L-BFGS history
+            lbfgs.update(&x_prev, &x, &grad_prev, &gradient);
+
+            iteration += 1;
+
+            // Track best
+            if f_x < best_loss {
+                best_loss = f_x;
+                best_x = x.clone();
+            }
+
+            if iteration % 5 == 0 || iteration == self.config.lbfgs_iterations {
+                println!("  L-BFGS iter {}: loss = {:.6} (α = {:.2e})", iteration, f_x, alpha);
+            }
         }
 
         // Write best parameters back to Gaussians
         self.write_params_to_gaussians(&best_x, gaussians);
 
-        println!("  L-BFGS converged in {} iterations", iterations);
+        println!("  L-BFGS completed {} iterations", iteration);
 
         best_loss
     }
@@ -197,50 +262,92 @@ impl HybridOptimizer {
         }
     }
 
-    /// Compute gradient using finite differences
-    fn compute_gradient_fd(
+    /// Compute gradient using analytical derivatives
+    ///
+    /// Returns gradient vector in same order as params: [x, y, r, g, b, sx, sy] per Gaussian
+    fn compute_gradient_analytical(
         &self,
-        params: &[f32],
-        template: &[Gaussian2D<f32, Euler<f32>>],
+        gaussians: &[Gaussian2D<f32, Euler<f32>>],
         target: &ImageBuffer<f32>,
     ) -> Vec<f32> {
-        let eps = 1e-5;
-        let n = params.len();
-        let mut grad = vec![0.0f32; n];
+        let width = target.width;
+        let height = target.height;
+        let n = gaussians.len();
 
-        let f0 = {
-            let temp_gaussians = self.params_to_gaussians(params, template);
-            let rendered = RendererV2::render(&temp_gaussians, target.width, target.height);
-            self.compute_loss(&rendered, target)
-        };
+        // Per-Gaussian gradients
+        let mut grads: Vec<[f32; 7]> = vec![[0.0; 7]; n];
 
-        // Central difference for better accuracy
-        let mut params_plus = params.to_vec();
-        let mut params_minus = params.to_vec();
+        let rendered = RendererV2::render(gaussians, width, height);
 
-        for i in 0..n {
-            params_plus[i] = params[i] + eps;
-            params_minus[i] = params[i] - eps;
+        // Accumulate gradients from each pixel
+        for y in 0..height {
+            for x in 0..width {
+                let px = x as f32 / width as f32;
+                let py = y as f32 / height as f32;
 
-            let f_plus = {
-                let temp = self.params_to_gaussians(&params_plus, template);
-                let rendered = RendererV2::render(&temp, target.width, target.height);
-                self.compute_loss(&rendered, target)
-            };
+                let rendered_color = rendered.get_pixel(x, y).unwrap();
+                let target_color = target.get_pixel(x, y).unwrap();
 
-            let f_minus = {
-                let temp = self.params_to_gaussians(&params_minus, template);
-                let rendered = RendererV2::render(&temp, target.width, target.height);
-                self.compute_loss(&rendered, target)
-            };
+                // Error derivatives (2 * (rendered - target) for MSE)
+                let error_r = 2.0 * (rendered_color.r - target_color.r);
+                let error_g = 2.0 * (rendered_color.g - target_color.g);
+                let error_b = 2.0 * (rendered_color.b - target_color.b);
 
-            grad[i] = (f_plus - f_minus) / (2.0 * eps);
+                for (i, gaussian) in gaussians.iter().enumerate() {
+                    let dx = px - gaussian.position.x;
+                    let dy = py - gaussian.position.y;
 
-            params_plus[i] = params[i];
-            params_minus[i] = params[i];
+                    let sx = gaussian.shape.scale_x.max(1e-6);
+                    let sy = gaussian.shape.scale_y.max(1e-6);
+                    let theta = gaussian.shape.rotation;
+                    let cos_t = theta.cos();
+                    let sin_t = theta.sin();
+
+                    // Rotated coordinates
+                    let dx_rot = dx * cos_t + dy * sin_t;
+                    let dy_rot = -dx * sin_t + dy * cos_t;
+
+                    let dist_sq = (dx_rot / sx).powi(2) + (dy_rot / sy).powi(2);
+                    if dist_sq > 16.0 { continue; }
+
+                    let weight = (-0.5 * dist_sq).exp();
+                    if weight < 1e-6 { continue; }
+
+                    // Color gradients: d_loss/d_color = error * weight
+                    grads[i][2] += error_r * weight;  // r
+                    grads[i][3] += error_g * weight;  // g
+                    grads[i][4] += error_b * weight;  // b
+
+                    // Position gradients: chain rule through Gaussian weight
+                    let error_weighted = error_r * gaussian.color.r
+                                       + error_g * gaussian.color.g
+                                       + error_b * gaussian.color.b;
+
+                    let grad_weight_x = weight * (dx_rot * cos_t / (sx * sx) - dy_rot * sin_t / (sy * sy));
+                    let grad_weight_y = weight * (dx_rot * sin_t / (sx * sx) + dy_rot * cos_t / (sy * sy));
+
+                    // Sign corrections from V2 optimizer research
+                    grads[i][0] -= error_weighted * grad_weight_x;  // x (minus)
+                    grads[i][1] += error_weighted * grad_weight_y;  // y (plus)
+
+                    // Scale gradients
+                    grads[i][5] += error_weighted * weight * (dx_rot * dx_rot) / (sx * sx * sx);  // scale_x
+                    grads[i][6] += error_weighted * weight * (dy_rot * dy_rot) / (sy * sy * sy);  // scale_y
+                }
+            }
         }
 
-        grad
+        // Normalize by pixel count and flatten to parameter vector
+        let pixel_count = (width * height) as f32;
+        let mut flat_grad = Vec::with_capacity(n * 7);
+
+        for g in &grads {
+            for &v in g {
+                flat_grad.push(v / pixel_count);
+            }
+        }
+
+        flat_grad
     }
 
     fn compute_loss(&self, rendered: &ImageBuffer<f32>, target: &ImageBuffer<f32>) -> f32 {

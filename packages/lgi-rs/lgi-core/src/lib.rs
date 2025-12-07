@@ -85,3 +85,7 @@ pub mod lbfgs;
 pub mod laplacian;  // Laplacian operator for GDGS
 pub mod poisson_solver;  // Poisson reconstruction for GDGS
 pub mod position_probability_map;  // PPM for non-uniform Gaussian placement (Strategy G)
+pub mod feature_classifier;  // Per-pixel feature classification for adaptive encoding
+pub mod artifact_detector;  // Artifact detection (bleeding, blur, ringing) for guided refinement
+pub mod image_analysis;  // Unified image analysis pipeline for adaptive encoding
+pub mod iterative_refinement;  // Iterative refinement with artifact feedback

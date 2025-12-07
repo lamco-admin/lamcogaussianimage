@@ -7,17 +7,31 @@ use wgpu::util::DeviceExt;
 use bytemuck::{Pod, Zeroable};
 
 /// GPU-friendly Gaussian representation (aligned for shader)
+/// MUST match WGSL struct layout EXACTLY:
+///   offset 0-8:   position (vec2<f32>)
+///   offset 8-12:  scale_x (f32)
+///   offset 12-16: scale_y (f32)
+///   offset 16-20: rotation (f32)
+///   offset 20-24: color_r (f32)
+///   offset 24-28: color_g (f32)
+///   offset 28-32: color_b (f32)
+///   offset 32-36: color_a (f32)
+///   offset 36-40: opacity (f32)
+///   offset 40-48: _padding (vec2<u32>)
 #[repr(C)]
 #[derive(Debug, Clone, Copy, Pod, Zeroable)]
 pub struct GpuGaussian {
-    pub position: [f32; 2],    // μx, μy
-    pub scale: [f32; 2],       // σx, σy
-    pub rotation: f32,         // θ
-    pub _padding1: f32,        // Alignment padding
-    pub _padding2: [f32; 2],   // CRITICAL: vec3 in WGSL has 16-byte alignment!
-    pub color: [f32; 3],       // R, G, B (offset 32, aligned to 16)
-    pub opacity: f32,          // α
-    // Total: 12 floats × 4 bytes = 48 bytes (correct WGSL alignment)
+    pub position: [f32; 2],    // μx, μy - 8 bytes @ offset 0
+    pub scale_x: f32,          // σx - 4 bytes @ offset 8
+    pub scale_y: f32,          // σy - 4 bytes @ offset 12
+    pub rotation: f32,         // θ - 4 bytes @ offset 16
+    pub color_r: f32,          // R - 4 bytes @ offset 20
+    pub color_g: f32,          // G - 4 bytes @ offset 24
+    pub color_b: f32,          // B - 4 bytes @ offset 28
+    pub color_a: f32,          // A - 4 bytes @ offset 32
+    pub opacity: f32,          // α - 4 bytes @ offset 36
+    pub _padding: [u32; 2],    // Alignment - 8 bytes @ offset 40
+    // Total: 48 bytes (matches WGSL exactly)
 }
 
 impl GpuGaussian {
@@ -25,12 +39,15 @@ impl GpuGaussian {
     pub fn from_gaussian(g: &Gaussian2D<f32, Euler<f32>>) -> Self {
         Self {
             position: [g.position.x, g.position.y],
-            scale: [g.shape.scale_x, g.shape.scale_y],
+            scale_x: g.shape.scale_x,
+            scale_y: g.shape.scale_y,
             rotation: g.shape.rotation,
-            _padding1: 0.0,
-            _padding2: [0.0, 0.0],  // Align color to 16-byte boundary for WGSL
-            color: [g.color.r, g.color.g, g.color.b],
+            color_r: g.color.r,
+            color_g: g.color.g,
+            color_b: g.color.b,
+            color_a: g.color.a,
             opacity: g.opacity,
+            _padding: [0, 0],
         }
     }
 

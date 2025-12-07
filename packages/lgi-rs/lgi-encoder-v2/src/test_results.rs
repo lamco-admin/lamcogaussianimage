@@ -388,32 +388,46 @@ fn chrono_lite_timestamp() -> String {
     let secs = duration.as_secs();
 
     // Convert to date/time (simplified, assumes UTC)
-    let days = secs / 86400;
+    let mut days = secs / 86400;
     let remaining = secs % 86400;
     let hours = remaining / 3600;
     let minutes = (remaining % 3600) / 60;
     let seconds = remaining % 60;
 
-    // Simplified date calculation (good enough for our purposes)
-    // This is approximate but works for 2020-2030
-    let years_since_1970 = days / 365;
-    let year = 1970 + years_since_1970;
-    let day_of_year = days % 365;
-
-    // Very rough month/day (ignoring leap years for simplicity)
-    let month_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    let mut month = 1;
-    let mut day = day_of_year;
-    for &days_in_month in &month_days {
-        if day < days_in_month as u64 {
+    // Proper date calculation accounting for leap years
+    let mut year = 1970;
+    loop {
+        let days_in_year = if is_leap_year(year) { 366 } else { 365 };
+        if days < days_in_year {
             break;
         }
-        day -= days_in_month as u64;
+        days -= days_in_year;
+        year += 1;
+    }
+
+    // Month/day calculation with leap year support
+    let month_days = if is_leap_year(year) {
+        [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    } else {
+        [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    };
+    let mut month = 1;
+    let mut day = days;
+    for &days_in_month in &month_days {
+        if day < days_in_month {
+            break;
+        }
+        day -= days_in_month;
         month += 1;
     }
 
     format!("{:04}-{:02}-{:02}T{:02}:{:02}:{:02}",
         year, month, day + 1, hours, minutes, seconds)
+}
+
+/// Check if a year is a leap year
+fn is_leap_year(year: u64) -> bool {
+    (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
 }
 
 /// Load all test results from a date

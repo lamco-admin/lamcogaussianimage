@@ -10,16 +10,19 @@ use lgi_math::parameterization::Euler;
 use wgpu::{Device, Queue};
 use bytemuck::{Pod, Zeroable};
 
+/// GPU gradient structure - MUST match WGSL layout AND array stride
+/// WGSL pads structs in arrays to the alignment of the largest field (vec2<f32> = 8 bytes)
+/// Size: 44 bytes content + 4 bytes padding = 48 bytes total stride
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]
 pub struct GpuGradient {
-    pub d_position: [f32; 2],
-    pub d_scale_x: f32,
-    pub d_scale_y: f32,
-    pub d_rotation: f32,
-    pub d_color: [f32; 4],
-    pub d_opacity: f32,
-    pub _padding: f32,
+    pub d_position: [f32; 2],   // 8 bytes @ offset 0
+    pub d_scale_x: f32,         // 4 bytes @ offset 8
+    pub d_scale_y: f32,         // 4 bytes @ offset 12
+    pub d_rotation: f32,        // 4 bytes @ offset 16
+    pub d_color: [f32; 4],      // 16 bytes @ offset 20
+    pub d_opacity: f32,         // 4 bytes @ offset 36
+    pub _padding: [f32; 2],     // 8 bytes @ offset 40 - CRITICAL: 48 bytes total!
 }
 
 #[repr(C)]

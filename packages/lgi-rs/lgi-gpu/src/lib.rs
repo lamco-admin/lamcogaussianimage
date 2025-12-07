@@ -29,3 +29,19 @@ pub mod manager;
 pub use manager::GpuManager;
 pub mod gradient;
 pub use gradient::{GpuGradientComputer, GpuGradient};
+
+pub mod adam_optimizer;
+pub use adam_optimizer::{GpuAdamOptimizer, GpuLearningRates};
+
+pub mod lbfgs_optimizer;
+pub use lbfgs_optimizer::{GpuLbfgsOptimizer, LbfgsConfig};
+
+pub mod lm_optimizer;
+pub use lm_optimizer::{GpuLMOptimizer, LMConfig};
+
+pub mod jtj_strategy;
+pub use jtj_strategy::{
+    JtJStrategy, JtJContext, JtJResult, ComplexityClass, SparsityInfo,
+    BlockDiagonalJtJ, FullDenseJtJ, SparseJtJ, HierarchicalJtJ, MatrixFreeJtJ,
+    JtJStrategyRegistry,
+};

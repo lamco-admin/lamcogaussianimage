@@ -5,14 +5,20 @@
 //!
 //! Performance: 1000+ FPS @ 1080p with 10K Gaussians on modern GPU
 
-// Gaussian representation (9 floats × 4 bytes = 36 bytes, aligned)
+// Gaussian representation (must match ShaderGaussian in Rust)
+// Using separate f32 fields to avoid vec4 16-byte alignment issues
+// Total: 48 bytes (matches Rust exactly)
 struct Gaussian {
-    position: vec2<f32>,      // μx, μy (normalized [0, 1])
-    scale: vec2<f32>,         // σx, σy
-    rotation: f32,            // θ (radians)
-    _padding1: f32,           // Alignment padding
-    color: vec3<f32>,         // R, G, B
-    opacity: f32,             // α
+    position: vec2<f32>,      // μx, μy (normalized [0, 1]) - 8 bytes @ offset 0
+    scale_x: f32,             // σx - 4 bytes @ offset 8
+    scale_y: f32,             // σy - 4 bytes @ offset 12
+    rotation: f32,            // θ (radians) - 4 bytes @ offset 16
+    color_r: f32,             // R - 4 bytes @ offset 20
+    color_g: f32,             // G - 4 bytes @ offset 24
+    color_b: f32,             // B - 4 bytes @ offset 28
+    color_a: f32,             // A - 4 bytes @ offset 32
+    opacity: f32,             // α - 4 bytes @ offset 36
+    _padding: vec2<u32>,      // Alignment padding - 8 bytes @ offset 40
 }
 
 // Render parameters
@@ -44,8 +50,9 @@ fn evaluate_gaussian(g: Gaussian, point: vec2<f32>) -> f32 {
         -delta.x * sin_r + delta.y * cos_r
     );
 
-    // Scale-normalized distance
-    let scaled = rot_delta / g.scale;
+    // Scale-normalized distance (use separate scale_x, scale_y)
+    let scale = vec2<f32>(g.scale_x, g.scale_y);
+    let scaled = rot_delta / scale;
     let mahalanobis_sq = dot(scaled, scaled);
 
     // Bounding box check (3.5 sigma typical)
@@ -99,9 +106,9 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
             if (params.render_mode == 0u) {
                 // Alpha compositing (physically-based)
                 let one_minus_alpha = 1.0 - alpha_accum;
-                color.r += one_minus_alpha * g.color.r * alpha_contrib;
-                color.g += one_minus_alpha * g.color.g * alpha_contrib;
-                color.b += one_minus_alpha * g.color.b * alpha_contrib;
+                color.r += one_minus_alpha * g.color_r * alpha_contrib;
+                color.g += one_minus_alpha * g.color_g * alpha_contrib;
+                color.b += one_minus_alpha * g.color_b * alpha_contrib;
                 alpha_accum += one_minus_alpha * alpha_contrib;
 
                 // Early termination (99.9% opacity reached)
@@ -111,9 +118,9 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
             } else {
                 // Accumulated summation with WEIGHTED NORMALIZATION (matches CPU renderer_v2.rs)
                 // This is the correct implementation: C = Σ(w×c) / Σ(w)
-                color.r += g.color.r * alpha_contrib;
-                color.g += g.color.g * alpha_contrib;
-                color.b += g.color.b * alpha_contrib;
+                color.r += g.color_r * alpha_contrib;
+                color.g += g.color_g * alpha_contrib;
+                color.b += g.color_b * alpha_contrib;
                 color.a += alpha_contrib;  // Accumulate total weight
             }
         }
